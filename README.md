@@ -1,4 +1,4 @@
-Filechecker2 is a tool to keep track of / move / work with files stored at multiple locations.
+Filechecker2 is a tool to keep track of / move / work with files stored at multiple locations (even if they are offline). The tool itself does not do the "file operations", it utilizes [CopyCommander2](https://github.com/PascalCorpsman/CopyCommander2) for that.
 
 >
 > !! Attention, this is a work in progress, don't expect any working application !
