@@ -1,0 +1,76 @@
+object Form3: TForm3
+  Left = 323
+  Height = 362
+  Top = 734
+  Width = 705
+  Caption = 'Form3'
+  ClientHeight = 362
+  ClientWidth = 705
+  Position = poScreenCenter
+  LCLVersion = '4.99.0.0'
+  OnCreate = FormCreate
+  OnResize = FormResize
+  object CheckListBox1: TCheckListBox
+    Left = 8
+    Height = 120
+    Top = 8
+    Width = 688
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    ItemHeight = 0
+    TabOrder = 0
+    TopIndex = -1
+  end
+  object Button1: TButton
+    Left = 8
+    Height = 25
+    Top = 136
+    Width = 688
+    Anchors = [akLeft, akRight, akBottom]
+    Caption = 'Scan'
+    TabOrder = 1
+    OnClick = Button1Click
+  end
+  object Label1: TLabel
+    Left = 8
+    Height = 16
+    Top = 168
+    Width = 40
+    Caption = 'Label1'
+  end
+  object Button2: TButton
+    Left = 8
+    Height = 25
+    Top = 288
+    Width = 688
+    Anchors = [akLeft, akBottom]
+    Caption = 'Apply changes to database'
+    TabOrder = 2
+    OnClick = Button2Click
+  end
+  object Button4: TButton
+    Left = 8
+    Height = 25
+    Top = 328
+    Width = 688
+    Anchors = [akLeft, akRight, akBottom]
+    Caption = 'Close'
+    ModalResult = 1
+    TabOrder = 3
+  end
+  object Button5: TButton
+    Left = 8
+    Height = 25
+    Top = 256
+    Width = 688
+    Anchors = [akLeft, akRight, akBottom]
+    Caption = 'Export litsts ..'
+    TabOrder = 4
+    OnClick = Button5Click
+  end
+  object SaveDialog1: TSaveDialog
+    DefaultExt = '.csv'
+    Filter = 'CommaSeparatedFile|*.csv|All|*'
+    Left = 240
+    Top = 48
+  end
+end
