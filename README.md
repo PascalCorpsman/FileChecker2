@@ -4,6 +4,9 @@ Filechecker2 is a tool to keep track of / move / work with files stored at multi
 > !! Attention, this is a work in progress, don't expect any working application !
 >
 
+![](preview.png)
+
+
 ## What needs to be done to compile Filechecker2
 
 To be able to compile the code you need the [Lazarus-IDE](https://www.lazarus-ide.org)
