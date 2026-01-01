@@ -33,6 +33,7 @@ Type
     Button5: TButton;
     Button6: TButton;
     Button7: TButton;
+    CheckBox1: TCheckBox;
     Edit1: TEdit;
     Edit2: TEdit;
     Edit3: TEdit;
@@ -215,6 +216,7 @@ Begin
     If trim(s) <> '' Then
       listbox2.Items.Add(s);
   End;
+  CheckBox1.Checked := IniFile.ReadBool('Search', 'AlwaysJumpToLast', false);
 
 End;
 
@@ -239,6 +241,9 @@ Begin
   For i := 0 To listbox2.Items.Count - 1 Do Begin
     IniFile.WriteString('Queries', 'Query' + inttostr(i), listbox2.Items[i]);
   End;
+
+  IniFile.WriteBool('Search', 'AlwaysJumpToLast', CheckBox1.Checked);
+
 End;
 
 End.

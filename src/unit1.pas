@@ -278,6 +278,9 @@ Begin
     ListBox1.Items.Add(DataBase[i].RootLabel + ': ' + DataBase[i].Filename);
   End;
   ListBox1.Items.EndUpdate;
+  If IniFile.ReadBool('Search', 'AlwaysJumpToLast', false) Then Begin
+    If ListBox1.Count <> 0 Then ListBox1.ItemIndex := ListBox1.Count - 1;
+  End;
   UpdateSelectedState;
 End;
 
