@@ -513,9 +513,6 @@ Procedure TryDoMove(index: Integer; TargetRoot, TargetFilename: String);
 Var
   TargetFolder, SourceName, TargetName: String;
 Begin
-  //  AddMoveJob(index, TargetRoot, TargetFilename); // -- Debug Remove
-  //  exit; // -- Debug Remove
-
   // Sind wir mit der Aktuellen Root verbunden ?
   SourceName := DataBase[index].Root + DataBase[index].Filename;
   If Not FileExists(SourceName) Then Begin
@@ -577,9 +574,7 @@ Begin
   End;
   // Der Aufwändige Fall, wir müssen über den CopyCommander2 die Datei verschieben..
 
-  hier gehts weiter !
-
-  nop();
+  //  ExecuteJob über CopyCommander2 !
 End;
 
 End.

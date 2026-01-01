@@ -198,12 +198,19 @@ End;
 
 Procedure TForm3.Button2Click(Sender: TObject);
 Var
-  alen, i, index: Integer;
+  alen, i, index, j: Integer;
 Begin
   // Die Dateien kommen so wie sie sind in die Datenbank
   // 1. Alle Löschungen
   For i := 0 To high(Dellist) Do Begin
-
+    index := GetIndexOf(Dellist[i].Root, Dellist[i].FileName);
+    If index = -1 Then Begin
+      Raise exception.create('Error, should delete: "' + Dellist[i].FileName + '" but is not in database.');
+    End;
+    For j := index To high(DataBase) - 1 Do Begin
+      DataBase[j] := DataBase[j + 1];
+    End;
+    setlength(DataBase, high(DataBase));
   End;
   // 2. Alles was Umbenannt wurde
   For i := 0 To high(RenameList) Do Begin
@@ -221,11 +228,11 @@ Begin
     End;
   End;
   // Alles was dazu gekommen ist..
-//  alen := length(DataBase);
-//  setlength(DataBase, alen + length(CopyList));
-//  For i := 0 To high(CopyList) Do Begin
-//    DataBase[i + alen] := ToDataSet(CopyList[i]);
-//  End;
+  alen := length(DataBase);
+  setlength(DataBase, alen + length(CopyList));
+  For i := 0 To high(CopyList) Do Begin
+    DataBase[i + alen] := ToDataSet(CopyList[i]);
+  End;
   SortFileList(DataBase);
   DBChanged := true;
   showmessage('Done.');
