@@ -116,7 +116,7 @@ object Form1: TForm1
     OnKeyDown = ComboBox1KeyDown
   end
   object ImageList1: TImageList
-    Left = 48
+    Left = 64
     Top = 64
     Bitmap = {
       4C7A0A0000001000000010000000D21400000000000078DAED59775496579ACF
@@ -291,7 +291,7 @@ object Form1: TForm1
   end
   object PopupMenu1: TPopupMenu
     Images = ImageList1
-    Left = 48
+    Left = 64
     Top = 128
     object MenuItem3: TMenuItem
       Caption = 'Rename (F2)'
@@ -316,5 +316,12 @@ object Form1: TForm1
     OnTimer = Timer1Timer
     Left = 688
     Top = 472
+  end
+  object LTCPComponent1: TLTCPComponent
+    Port = 0
+    Timeout = 0
+    ReuseAddress = False
+    Left = 64
+    Top = 200
   end
 end

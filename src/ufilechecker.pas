@@ -26,6 +26,8 @@ Uses
 Const
   Separator = #9;
   Divider = ';';
+  CopyCommanderIP = '127.0.0.1';
+  CopyCommanderPort = 8080;
 
 Type
 
@@ -135,9 +137,23 @@ Function JobDetailToString(aDetail: TJobDetail): String;
 
 Implementation
 
+Uses ucopycomandercontroller;
+
 Procedure Nop;
 Begin
 
+End;
+
+Function GetFileSize(Filename: String): Int64;
+Var
+  sr: TSearchRec;
+Begin
+  result := 0;
+  // Alle Verzeichnisse
+  If FindFirst(Filename, faAnyFile, SR) = 0 Then Begin
+    result := sr.Size;
+    FindClose(SR);
+  End;
 End;
 
 (*
@@ -552,6 +568,7 @@ End;
 Function ExecuteJob(Const aJob: TJob): Boolean;
 Var
   fp: String;
+  index: Integer;
 Begin
   result := false;
   If Not FileExists(aJob.RealSourceFile) Then exit;
@@ -562,9 +579,36 @@ Begin
     result := true;
     exit;
   End;
-  // Der Aufwändige Fall, wir müssen über den CopyCommander2 die Datei verschieben..
-
-  //  ExecuteJob über CopyCommander2 !
+  // 1. Check if Copy Commander is Running
+  If Not isCopyCommanderRestAPIRunning(CopyCommanderIP, CopyCommanderPort) Then Begin
+    // 1.5 Start Copy Commander
+    If Not StartCopyCommander(CopyCommanderCmd) Then Begin
+      // Todo: Fehlermeldung ?
+      exit;
+    End;
+    delay(2000); // TODO: gibt es hier einen besseren Weg als zu warten ?
+    // 1.75 Check if Copy Commander is Running -> Not Error
+    If Not isCopyCommanderRestAPIRunning(CopyCommanderIP, CopyCommanderPort) Then Begin
+      // Todo: Fehlermeldung ?
+      exit;
+    End;
+  End;
+  // 2. Copy Commander läuft, den Job Übergeben ;)
+  Case aJob.Job Of
+    jMove: Begin
+        // Der Copy Commander hat behauptet, dass es geklappt hat
+        If Not CopyCommanderMoveFile(aJob.RealSourceFile, aJob.TargetRoot + aJob.TargetFilename) Then exit;
+        // Das Prüfen wir hier noch mal Explizit
+        If Not FileExists(aJob.TargetRoot + aJob.TargetFilename) Then exit;
+        // TODO: Explizit auch die Dateigröße Prüfen !
+        index := GetIndexOf(aJob.TargetRoot, aJob.TargetFilename);
+        If index = -1 Then exit;
+        If GetFileSize(aJob.TargetRoot + aJob.TargetFilename) <> DataBase[index].Size Then Begin
+          Raise exception.Create('Error, during file moving, please check validity of file: ' + aJob.TargetRoot + aJob.TargetFilename);
+        End;
+        result := true;
+      End;
+  End;
 End;
 
 End.

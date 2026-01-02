@@ -20,7 +20,7 @@ Interface
 
 Uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ComCtrls,
-  Buttons, ufilechecker;
+  Buttons, lNetComponents, ufilechecker;
 
 Type
 
@@ -56,7 +56,10 @@ Implementation
 
 {$R *.lfm}
 
-Uses unit7;
+Uses
+  ucopycomandercontroller
+  , unit7 // Job Detail Dialog
+  ;
 
 { TForm6 }
 
@@ -116,12 +119,13 @@ Begin
   For i := high(JobsDone) Downto 0 Do Begin
     If JobsDone[i] Then Begin
       inc(cnt);
-      For j := i To high(PendingJobs) Do Begin
+      For j := i To high(PendingJobs) - 1 Do Begin
         PendingJobs[j] := PendingJobs[j + 1];
       End;
       SetLength(PendingJobs, high(PendingJobs));
     End;
   End;
+  StopCopyCommander(CopyCommanderIP, CopyCommanderPort);
   If fAbort Then Begin
     showmessage(format('Abort, was able to finish: %d Jobs', [cnt]));
   End

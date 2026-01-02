@@ -92,5 +92,6 @@ object Form4: TForm4
     TabOrder = 7
     Text = 'Edit1'
     OnChange = Edit1Change
+    OnKeyDown = Edit1KeyDown
   end
 end

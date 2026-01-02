@@ -43,7 +43,7 @@ Interface
 
 Uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, Buttons, StdCtrls,
-  ComCtrls, Menus, ExtCtrls, IniFiles, ufilechecker;
+  ComCtrls, Menus, ExtCtrls, lNetComponents, IniFiles, ufilechecker;
 
 Type
 
@@ -53,6 +53,7 @@ Type
     ComboBox1: TComboBox;
     ImageList1: TImageList;
     ListBox1: TListBox;
+    LTCPComponent1: TLTCPComponent;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
@@ -114,6 +115,7 @@ Uses LCLType, math, lclintf
   , unit5 // Detail Info Dialog
   , unit6 // Job Execute Dialog
   //  , unit7 // Show pending Jobs Details
+  , ucopycomandercontroller
   ;
 
 { TForm1 }
@@ -134,6 +136,7 @@ Begin
   UpdateSelectedState;
   UpdatePendingJobs;
   UpdateConnectedRoots;
+  CopyCommanderController_Init(LTCPComponent1);
   FormShowOnce := true;
 End;
 
@@ -353,6 +356,7 @@ Begin
   StoreDataBase;
   StoreQueryHistory;
   StorePendingJobs;
+  CopyCommanderController_Clear();
   IniFile.Free;
   IniFile := Nil;
 End;
@@ -484,14 +488,8 @@ Procedure TForm1.QueryPendingJobs;
 Begin
   If PendingJobsDoable <> 0 Then Begin
     ReportPendingJobsDoable := false;
-    Case Application.MessageBox('At least one pending job could be executed, start jobs now ?', 'Question', MB_ICONQUESTION Or MB_YESNO) Of
-      ID_YES: Begin
-          SpeedButton5.Click;
-          ReportPendingJobsDoable := true;
-        End;
-      ID_NO: Begin
-          ReportPendingJobsDoable := false;
-        End;
+    If Application.MessageBox('At least one pending job could be executed, start jobs now ?', 'Question', MB_ICONQUESTION Or MB_YESNO) = ID_YES Then Begin
+      SpeedButton5.Click;
     End;
   End;
 End;

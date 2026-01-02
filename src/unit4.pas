@@ -39,6 +39,7 @@ Type
     Procedure Button2Click(Sender: TObject);
     Procedure Button3Click(Sender: TObject);
     Procedure Edit1Change(Sender: TObject);
+    Procedure Edit1KeyDown(Sender: TObject; Var Key: Word; Shift: TShiftState);
     Procedure FormCreate(Sender: TObject);
     Procedure FormShow(Sender: TObject);
     Procedure StringGrid1Click(Sender: TObject);
@@ -59,7 +60,7 @@ Implementation
 
 {$R *.lfm}
 
-Uses math;
+Uses math, LCLType;
 
 { TForm4 }
 
@@ -138,6 +139,12 @@ Begin
   StringGrid1.EndUpdate();
 End;
 
+Procedure TForm4.Edit1KeyDown(Sender: TObject; Var Key: Word; Shift: TShiftState
+  );
+Begin
+  If key = VK_RETURN Then Button3.Click;
+End;
+
 Procedure TForm4.StringGrid1SelectCell(Sender: TObject; aCol, aRow: Integer;
   Var CanSelect: Boolean);
 Begin
@@ -183,5 +190,4 @@ Begin
 End;
 
 End.
-
 

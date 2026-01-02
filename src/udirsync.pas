@@ -16,7 +16,6 @@ Unit udirsync;
 
 {$MODE ObjFPC}{$H+}
 
-
 Interface
 
 Uses
