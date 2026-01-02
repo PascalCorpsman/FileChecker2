@@ -138,6 +138,7 @@ Procedure TForm6.Init;
 Begin
   label2.caption := inttostr(length(PendingJobs));
   label4.caption := inttostr(PendingJobsDoable());
+  // TODO: Anzeigen der Liste der Beteiligten "Roots"
 End;
 
 End.

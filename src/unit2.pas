@@ -274,6 +274,10 @@ Begin
 
   IniFile.WriteBool('Search', 'AlwaysJumpToLast', CheckBox1.Checked);
 
+  IniFile.WriteInteger('Queries', 'Count', listbox2.Items.Count);
+  For i := 0 To listbox2.Items.Count - 1 Do Begin
+    IniFile.WriteString('Queries', 'Query' + inttostr(i), listbox2.Items[i]);
+  End;
 End;
 
 End.
