@@ -334,6 +334,7 @@ Begin
     key := 0;
     If Application.MessageBox(pchar('Add "' + ComboBox1.Text + '" to query history ?'), 'Question', MB_ICONQUESTION Or MB_YESNO) = ID_YES Then Begin
       ComboBox1.Items.Add(ComboBox1.Text);
+      StoreQueryHistory;
     End;
   End;
   If key = VK_ESCAPE Then Begin
@@ -486,6 +487,7 @@ End;
 
 Procedure TForm1.QueryPendingJobs;
 Begin
+  If Form4.Visible Then exit;
   If PendingJobsDoable <> 0 Then Begin
     ReportPendingJobsDoable := false;
     If Application.MessageBox('At least one pending job could be executed, start jobs now ?', 'Question', MB_ICONQUESTION Or MB_YESNO) = ID_YES Then Begin
