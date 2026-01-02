@@ -131,6 +131,8 @@ Function PendingJobsDoable: integer;
 
 Function ExecuteJob(Const aJob: TJob): Boolean;
 
+Function JobDetailToString(aDetail: TJobDetail): String;
+
 Implementation
 
 Procedure Nop;

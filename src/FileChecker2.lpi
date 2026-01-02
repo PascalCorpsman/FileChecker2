@@ -68,6 +68,7 @@
         <Filename Value="unit5.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="Form5"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
       </Unit>
       <Unit>
@@ -90,6 +91,7 @@
         <Filename Value="unit7.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="Form7"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Unit7"/>
       </Unit>

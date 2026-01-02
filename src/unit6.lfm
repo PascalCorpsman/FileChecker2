@@ -74,7 +74,7 @@ object Form6: TForm6
   object SpeedButton3: TSpeedButton
     Left = 367
     Height = 32
-    Hint = 'Search / Update Root folders'
+    Hint = 'Show / edit pending jobs'
     Top = 8
     Width = 32
     Anchors = [akTop, akRight]

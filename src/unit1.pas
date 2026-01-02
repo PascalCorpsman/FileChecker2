@@ -55,6 +55,7 @@ Type
     ListBox1: TListBox;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
+    MenuItem3: TMenuItem;
     PopupMenu1: TPopupMenu;
     Separator1: TMenuItem;
     SpeedButton2: TSpeedButton;
@@ -74,6 +75,7 @@ Type
       );
     Procedure MenuItem1Click(Sender: TObject);
     Procedure MenuItem2Click(Sender: TObject);
+    Procedure MenuItem3Click(Sender: TObject);
     Procedure SpeedButton2Click(Sender: TObject);
     Procedure SpeedButton3Click(Sender: TObject);
     Procedure SpeedButton4Click(Sender: TObject);
@@ -84,6 +86,7 @@ Type
     Procedure Timer1Timer(Sender: TObject);
   private
     FormShowOnce: Boolean;
+    ReportPendingJobsDoable: Boolean;
     Procedure LoadQueryHistory;
     Procedure StoreQueryHistory;
 
@@ -122,6 +125,7 @@ Begin
   Constraints.MinWidth := Width;
   Constraints.MinHeight := Height;
   ComboBox1.text := '';
+  ReportPendingJobsDoable := true;
   LoadSettings;
   LoadQueryHistory;
   LoadPendingJobs;
@@ -181,10 +185,13 @@ Begin
     End;
   End;
   // F2 = Rename
+  If key = VK_F2 Then MenuItem3Click(Nil);
 
   // F6 = Move
   If key = VK_F6 Then MenuItem1Click(Nil);
+
   // F8 = Delete
+  If key = VK_F8 Then showmessage('Todo: delete file');
 
   If key = VK_DOWN Then Begin
     ListBox1.ItemIndex := min(ListBox1.ItemIndex + 1, ListBox1.Count - 1);
@@ -217,6 +224,7 @@ End;
 
 Procedure TForm1.MenuItem1Click(Sender: TObject);
 Begin
+  // Move Files to
   Form4.Init(SelectionToIndexes);
   form4.ShowModal;
   ComboBox1Change(Nil); // Die Suchergebnisse müssen ggf angepasst werden
@@ -229,9 +237,39 @@ Procedure TForm1.MenuItem2Click(Sender: TObject);
 Var
   fn: String;
 Begin
+  // Explore to
   If ListBox1.ItemIndex <> -1 Then Begin
     fn := DataBase[Selected[ListBox1.ItemIndex]].Root + DataBase[Selected[ListBox1.ItemIndex]].Filename;
     openurl(ExtractFileDir(fn));
+  End;
+End;
+
+Procedure TForm1.MenuItem3Click(Sender: TObject);
+Var
+  Searcher, default, s, NewName: String;
+  i: Integer;
+Begin
+  // File Rename
+  If ListBox1.ItemIndex = -1 Then exit;
+  default := ExtractFileName(DataBase[Selected[ListBox1.ItemIndex]].Filename);
+  s := InputBox('Rename', 'File', default);
+  // Bei Abbruch wird s zum Default, leerstrings sind nicht erlaubt !
+  If (s <> '') And (s <> default) Then Begin
+    newname := ExtractFilePath(DataBase[Selected[ListBox1.ItemIndex]].Filename);
+    newname := newname + s;
+    Searcher := DataBase[Selected[ListBox1.ItemIndex]].RootLabel + ': ' + NewName;
+    TryDoMove(Selected[ListBox1.ItemIndex], DataBase[Selected[ListBox1.ItemIndex]].Root, NewName);
+    SortFileList(DataBase);
+    // Ansicht neu Laden
+    ComboBox1Change(Nil);
+    // Neuen Datensatz auswählen
+    For i := 0 To ListBox1.Items.count - 1 Do Begin
+      If ListBox1.Items[i] = Searcher Then Begin
+        ListBox1.ItemIndex := i;
+        break;
+      End;
+    End;
+    UpdatePendingJobs;
   End;
 End;
 
@@ -297,6 +335,9 @@ Begin
   End;
   If key = VK_ESCAPE Then Begin
     Close;
+  End;
+  If (key = VK_DOWN) And (ComboBox1.Text <> '') Then Begin
+    key := VK_TAB;
   End;
   If key = VK_TAB Then Begin
     If ListBox1.Items.Count <> 0 Then Begin
@@ -410,6 +451,9 @@ End;
 Procedure TForm1.Timer1Timer(Sender: TObject);
 Begin
   UpdateConnectedRoots;
+  If ReportPendingJobsDoable And (PendingJobsDoable <> 0) Then Begin
+    QueryPendingJobs();
+  End;
 End;
 
 Procedure TForm1.LoadQueryHistory;
@@ -439,8 +483,15 @@ End;
 Procedure TForm1.QueryPendingJobs;
 Begin
   If PendingJobsDoable <> 0 Then Begin
-    If Application.MessageBox('At least one pending job could be executed, start jobs now ?', 'Question', MB_ICONQUESTION Or MB_YESNO) = ID_YES Then Begin
-      SpeedButton5.Click;
+    ReportPendingJobsDoable := false;
+    Case Application.MessageBox('At least one pending job could be executed, start jobs now ?', 'Question', MB_ICONQUESTION Or MB_YESNO) Of
+      ID_YES: Begin
+          SpeedButton5.Click;
+          ReportPendingJobsDoable := true;
+        End;
+      ID_NO: Begin
+          ReportPendingJobsDoable := false;
+        End;
     End;
   End;
 End;

@@ -63,14 +63,17 @@ Uses unit7;
 Procedure TForm6.FormCreate(Sender: TObject);
 Begin
   caption := 'Jobs';
+  Constraints.MinHeight := Height;
+  Constraints.MaxHeight := Height;
+  Constraints.MinWidth := Width;
+  Constraints.MaxWidth := Width;
 End;
 
 Procedure TForm6.SpeedButton3Click(Sender: TObject);
 Begin
   // Show Jobs
-  showmessage('Todo, edit / show detailed job list..');
-  //  form7.init;
-  //  form7.ShowModal;
+  form7.init;
+  form7.ShowModal;
 End;
 
 Procedure TForm6.Button3Click(Sender: TObject);
@@ -88,7 +91,7 @@ End;
 
 Procedure TForm6.Button1Click(Sender: TObject);
 Var
-  i, j: Integer;
+  cnt, i, j: Integer;
   JobsDone: Array Of Boolean;
 Begin
   // Execute Jobs
@@ -109,16 +112,21 @@ Begin
     End;
   End;
   // Löschen der Abgearbeiteten Jobs
+  cnt := 0;
   For i := high(JobsDone) Downto 0 Do Begin
     If JobsDone[i] Then Begin
+      inc(cnt);
       For j := i To high(PendingJobs) Do Begin
         PendingJobs[j] := PendingJobs[j + 1];
       End;
       SetLength(PendingJobs, high(PendingJobs));
     End;
   End;
-  If Not fAbort Then Begin
-    showmessage('Done.');
+  If fAbort Then Begin
+    showmessage(format('Abort, was able to finish: %d Jobs', [cnt]));
+  End
+  Else Begin
+    showmessage(format('Done, was able to finish: %d Jobs', [cnt]));
   End;
 End;
 
