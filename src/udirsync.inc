@@ -24,7 +24,8 @@ TRenameEntry = Record
   SourceFile: String;
   FileSize: Int64;
   DestFile: String;
-  Root: String;
+  SourceRoot: String;
+  DestRoot: String;
 End;
 
 TFileEntry = Record

@@ -1,10 +1,10 @@
 object Form4: TForm4
   Left = 323
-  Height = 385
+  Height = 421
   Top = 108
   Width = 800
   Caption = 'Form4'
-  ClientHeight = 385
+  ClientHeight = 421
   ClientWidth = 800
   Position = poScreenCenter
   LCLVersion = '4.99.0.0'
@@ -12,7 +12,7 @@ object Form4: TForm4
   OnShow = FormShow
   object CheckListBox1: TCheckListBox
     Left = 8
-    Height = 202
+    Height = 208
     Top = 8
     Width = 784
     Anchors = [akTop, akLeft, akRight, akBottom]
@@ -23,30 +23,30 @@ object Form4: TForm4
   object ComboBox2: TComboBox
     Left = 8
     Height = 30
-    Top = 241
+    Top = 248
     Width = 112
+    Anchors = [akLeft, akBottom]
     ItemHeight = 0
     Style = csDropDownList
     TabOrder = 1
   end
   object StringGrid1: TStringGrid
     Left = 128
-    Height = 104
-    Top = 241
+    Height = 102
+    Top = 280
     Width = 560
     Anchors = [akLeft, akRight, akBottom]
     ColCount = 1
     FixedCols = 0
     FixedRows = 0
-    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing, goSmoothScroll]
     TabOrder = 2
-    OnKeyDown = StringGrid1KeyDown
+    OnClick = StringGrid1Click
     OnSelectCell = StringGrid1SelectCell
   end
   object Button1: TButton
     Left = 744
     Height = 19
-    Top = 210
+    Top = 216
     Width = 48
     Anchors = [akRight, akBottom]
     Caption = 'All'
@@ -56,7 +56,7 @@ object Form4: TForm4
   object Button2: TButton
     Left = 696
     Height = 19
-    Top = 210
+    Top = 216
     Width = 48
     Anchors = [akRight, akBottom]
     Caption = 'None'
@@ -65,8 +65,8 @@ object Form4: TForm4
   end
   object Button3: TButton
     Left = 696
-    Height = 105
-    Top = 241
+    Height = 134
+    Top = 248
     Width = 96
     Anchors = [akRight, akBottom]
     Caption = 'Do it'
@@ -76,11 +76,21 @@ object Form4: TForm4
   object Button4: TButton
     Left = 8
     Height = 25
-    Top = 352
+    Top = 388
     Width = 784
     Anchors = [akLeft, akRight, akBottom]
     Caption = 'Close'
     ModalResult = 1
     TabOrder = 6
+  end
+  object Edit1: TEdit
+    Left = 128
+    Height = 26
+    Top = 248
+    Width = 560
+    Anchors = [akLeft, akRight, akBottom]
+    TabOrder = 7
+    Text = 'Edit1'
+    OnChange = Edit1Change
   end
 end

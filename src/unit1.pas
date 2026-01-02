@@ -110,6 +110,7 @@ Uses LCLType, math, lclintf
   , unit4 // Move Files Dialog
   , unit5 // Detail Info Dialog
   , unit6 // Job Execute Dialog
+  //  , unit7 // Show pending Jobs Details
   ;
 
 { TForm1 }
@@ -236,7 +237,7 @@ End;
 
 Procedure TForm1.ComboBox1Change(Sender: TObject);
 Var
-  r, f, s: String;
+  f2, r, f, s: String;
   i: Integer;
 Begin
   s := lowercase(trim(ComboBox1.Text));
@@ -263,13 +264,14 @@ Begin
     r := copy(f, 1, pos(':', f) - 1);
     delete(f, 1, length(r) + 1);
   End;
+  f2 := StringReplace(f, ' ', '_', [rfReplaceAll]);
   For i := 0 To high(DataBase) Do Begin
     // Falsche Root
     If r <> '' Then Begin
       If pos(r, DataBase[i].lRootlabel) = 0 Then Continue;
     End;
     // Filename Matcht nicht
-    If (f <> '*') And (pos(f, DataBase[i].lFilename) = 0) Then Continue;
+    If (f <> '*') And (pos(f2, DataBase[i].lFilename) = 0) And (pos(f, DataBase[i].lFilename) = 0) Then Continue;
 
     // TODO: weitere Checks ?
 
@@ -330,7 +332,7 @@ Begin
   // Scan Root Folders
   form3.Init;
   form3.ShowModal;
-  // ggf die Suchergebnisse neu aufbauen
+  // ggf. die Suchergebnisse neu aufbauen
   If ComboBox1.text <> '' Then Begin
     ComboBox1.OnChange(ComboBox1);
   End;

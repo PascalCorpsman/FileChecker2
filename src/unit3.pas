@@ -46,9 +46,6 @@ Type
     CopyList, Dellist: TFileList;
     RenameList: TRenameList;
     info: TReportInfos;
-
-    Function ToDataSet(Const aFile: TFileEntry): TDataSet;
-
   public
     Procedure Init;
 
@@ -76,21 +73,6 @@ Begin
   label1.top := Button1.Top + Button1.Height + 8;
 End;
 
-Function TForm3.ToDataSet(Const aFile: TFileEntry): TDataSet;
-Begin
-  result.Filename := aFile.FileName;
-  result.Size := aFile.FileSize;
-  result.Root := afile.Root;
-  result.Rating := Nil;
-  result.Categories := Nil;
-  result.Comment := '';
-  result.Scedule := 0;
-  result.Added := now;
-  result.Rootlabel := RootFolderToRootLabel(afile.Root);
-  result.lRootlabel := lowercase(result.Rootlabel);
-  result.lFilename := LowerCase(result.Filename);
-End;
-
 Procedure TForm3.Button1Click(Sender: TObject);
 Var
   Buffer: TFileList;
@@ -104,6 +86,7 @@ Var
     setlength(MergedBuffers, aLen + length(buffer));
     For i := 0 To high(buffer) Do Begin
       MergedBuffers[i + aLen] := buffer[i];
+      MergedBuffers[i + aLen].FileName := aRoot + buffer[i].FileName;
       MergedBuffers[i + aLen].Root := aRoot;
     End;
   End;
@@ -136,13 +119,32 @@ Var
         End;
       End;
       If found Then Begin
-        DataBaseFiles[cnt].FileName := DataBase[i].Filename;
+        DataBaseFiles[cnt].FileName := DataBase[i].Root + DataBase[i].Filename;
         DataBaseFiles[cnt].FileSize := DataBase[i].Size;
         DataBaseFiles[cnt].Root := DataBase[i].Root;
         inc(cnt);
       End;
     End;
     setlength(DataBaseFiles, cnt);
+  End;
+
+  Procedure CleanFromRoots(Var alist: TFileList);
+  Var
+    i: Integer;
+  Begin
+    For i := 0 To high(alist) Do Begin
+      delete(alist[i].FileName, 1, length(alist[i].Root))
+    End;
+  End;
+
+  Procedure CleanFromRoots(Var alist: TRenameList);
+  Var
+    i: Integer;
+  Begin
+    For i := 0 To high(alist) Do Begin
+      delete(alist[i].SourceFile, 1, length(alist[i].SourceRoot));
+      delete(alist[i].DestFile, 1, length(alist[i].DestRoot));
+    End;
   End;
 
 Var
@@ -179,6 +181,10 @@ Begin
   udirsync.SortFileList(MergedBuffers);
   udirsync.SortFileList(DataBaseFiles);
   GenerateJobLists('', '', MergedBuffers, DataBaseFiles, RenameList, CopyList, Dellist, false);
+  // Die Roots müssen nun wieder "raus"
+  CleanFromRoots(CopyList);
+  CleanFromRoots(Dellist);
+  CleanFromRoots(RenameList);
   info.CopyInfo := FileSizeToString(FileListToSize(CopyList));
   info.DelInfo := FileSizeToString(FileListToSize(DelList));
   info.RenameInfo := FileSizeToString(RenameFileListToSize(RenameList));
@@ -197,6 +203,24 @@ Begin
 End;
 
 Procedure TForm3.Button2Click(Sender: TObject);
+
+  Function ToDataSet(Const aFile: TFileEntry): TDataSet;
+  Begin
+    // Nur die Statischen Teile
+    result.Filename := aFile.FileName;
+    result.Size := aFile.FileSize;
+    result.Root := afile.Root;
+    result.Rating := Nil;
+    result.Categories := Nil;
+    result.Comment := '';
+    result.Scedule := 0;
+    result.Added := now;
+    // Die dynamischen Teile werden immer via RefreshDynamicContent gesetzt !
+    result.Rootlabel := '';
+    result.lRootlabel := '';
+    result.lFilename := '';
+  End;
+
 Var
   alen, i, index, j: Integer;
 Begin
@@ -214,17 +238,17 @@ Begin
   End;
   // 2. Alles was Umbenannt wurde
   For i := 0 To high(RenameList) Do Begin
-    index := GetIndexOf(RenameList[i].SourceFile);
+    index := GetIndexOf(RenameList[i].SourceRoot, RenameList[i].SourceFile);
     If index = -1 Then Begin
-      // Das sollte nicht notwendig sein, ..
-      showmessage('Error, could not find: "' + RenameList[i].SourceFile + '" in database.');
-    End
-    Else Begin
+      index := GetIndexOf(RenameList[i].DestRoot, RenameList[i].SourceFile);
+      If index = -1 Then Begin
+        showmessage('Error, could not find: "' + RenameList[i].SourceFile + '" in database.');
+      End;
+    End;
+    If index <> -1 Then Begin
       DataBase[Index].Filename := RenameList[i].DestFile;
-      DataBase[Index].Root := RenameList[i].Root;
-      DataBase[Index].Rootlabel := DataBase[Index].RootLabel;
-      DataBase[Index].lRootlabel := DataBase[Index].lRootlabel;
-      DataBase[Index].lFilename := lowercase(DataBase[Index].Filename);
+      DataBase[Index].Root := RenameList[i].DestRoot;
+      RefreshDynamicContent(index);
     End;
   End;
   // Alles was dazu gekommen ist..
@@ -232,6 +256,7 @@ Begin
   setlength(DataBase, alen + length(CopyList));
   For i := 0 To high(CopyList) Do Begin
     DataBase[i + alen] := ToDataSet(CopyList[i]);
+    RefreshDynamicContent(i + alen);
   End;
   SortFileList(DataBase);
   DBChanged := true;

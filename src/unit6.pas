@@ -20,7 +20,7 @@ Interface
 
 Uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ComCtrls,
-  ufilechecker;
+  Buttons, ufilechecker;
 
 Type
 
@@ -35,10 +35,12 @@ Type
     Label3: TLabel;
     Label4: TLabel;
     ProgressBar1: TProgressBar;
+    SpeedButton3: TSpeedButton;
     Procedure Button1Click(Sender: TObject);
     Procedure Button2Click(Sender: TObject);
     Procedure Button3Click(Sender: TObject);
     Procedure FormCreate(Sender: TObject);
+    Procedure SpeedButton3Click(Sender: TObject);
   private
 
     fAbort: Boolean;
@@ -54,11 +56,21 @@ Implementation
 
 {$R *.lfm}
 
+Uses unit7;
+
 { TForm6 }
 
 Procedure TForm6.FormCreate(Sender: TObject);
 Begin
   caption := 'Jobs';
+End;
+
+Procedure TForm6.SpeedButton3Click(Sender: TObject);
+Begin
+  // Show Jobs
+  showmessage('Todo, edit / show detailed job list..');
+  //  form7.init;
+  //  form7.ShowModal;
 End;
 
 Procedure TForm6.Button3Click(Sender: TObject);

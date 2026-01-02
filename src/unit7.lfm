@@ -1,0 +1,9 @@
+object Form7: TForm7
+  Left = 323
+  Height = 374
+  Top = 107
+  Width = 925
+  Caption = 'Form7'
+  Position = poScreenCenter
+  LCLVersion = '4.99.0.0'
+end

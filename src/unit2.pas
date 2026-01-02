@@ -33,6 +33,8 @@ Type
     Button5: TButton;
     Button6: TButton;
     Button7: TButton;
+    Button8: TButton;
+    Button9: TButton;
     CheckBox1: TCheckBox;
     Edit1: TEdit;
     Edit2: TEdit;
@@ -59,6 +61,8 @@ Type
     Procedure Button5Click(Sender: TObject);
     Procedure Button6Click(Sender: TObject);
     Procedure Button7Click(Sender: TObject);
+    Procedure Button8Click(Sender: TObject);
+    Procedure Button9Click(Sender: TObject);
     Procedure FormCreate(Sender: TObject);
     Procedure ListBox1Click(Sender: TObject);
   private
@@ -186,6 +190,32 @@ Begin
   If ListBox2.ItemIndex <> -1 Then Begin
     ListBox2.Items.Delete(ListBox2.ItemIndex);
   End;
+End;
+
+Procedure TForm2.Button8Click(Sender: TObject);
+Var
+  tmp: TRootFolder;
+Begin
+  // Move Root 1 up
+  If ListBox1.ItemIndex < 1 Then exit;
+  tmp := fRootFolders[ListBox1.ItemIndex];
+  fRootFolders[ListBox1.ItemIndex] := fRootFolders[ListBox1.ItemIndex - 1];
+  fRootFolders[ListBox1.ItemIndex - 1] := tmp;
+  ListBox1.Items.Exchange(ListBox1.ItemIndex, ListBox1.ItemIndex - 1);
+  ListBox1.ItemIndex := ListBox1.ItemIndex - 1;
+End;
+
+Procedure TForm2.Button9Click(Sender: TObject);
+Var
+  tmp: TRootFolder;
+Begin
+  // Move Root 1 down
+  If ListBox1.ItemIndex > ListBox1.Count - 2 Then exit;
+  tmp := fRootFolders[ListBox1.ItemIndex];
+  fRootFolders[ListBox1.ItemIndex] := fRootFolders[ListBox1.ItemIndex + 1];
+  fRootFolders[ListBox1.ItemIndex + 1] := tmp;
+  ListBox1.Items.Exchange(ListBox1.ItemIndex, ListBox1.ItemIndex + 1);
+  ListBox1.ItemIndex := ListBox1.ItemIndex + 1;
 End;
 
 Procedure TForm2.SettingsToLCL;

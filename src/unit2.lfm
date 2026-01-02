@@ -96,8 +96,8 @@ object Form2: TForm2
     end
     object Button5: TButton
       Left = 576
-      Height = 81
-      Top = 112
+      Height = 33
+      Top = 136
       Width = 35
       Caption = 'Del'
       TabOrder = 5
@@ -120,6 +120,24 @@ object Form2: TForm2
       ShowHint = True
       TabOrder = 6
       Text = 'Edit5'
+    end
+    object Button8: TButton
+      Left = 576
+      Height = 25
+      Top = 112
+      Width = 35
+      Caption = '^'
+      TabOrder = 7
+      OnClick = Button8Click
+    end
+    object Button9: TButton
+      Left = 576
+      Height = 25
+      Top = 168
+      Width = 35
+      Caption = 'v'
+      TabOrder = 8
+      OnClick = Button9Click
     end
   end
   object Label3: TLabel

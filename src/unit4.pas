@@ -33,18 +33,20 @@ Type
     Button4: TButton;
     CheckListBox1: TCheckListBox;
     ComboBox2: TComboBox;
+    Edit1: TEdit;
     StringGrid1: TStringGrid;
     Procedure Button1Click(Sender: TObject);
     Procedure Button2Click(Sender: TObject);
     Procedure Button3Click(Sender: TObject);
+    Procedure Edit1Change(Sender: TObject);
     Procedure FormCreate(Sender: TObject);
     Procedure FormShow(Sender: TObject);
-    Procedure StringGrid1KeyDown(Sender: TObject; Var Key: Word;
-      Shift: TShiftState);
+    Procedure StringGrid1Click(Sender: TObject);
     Procedure StringGrid1SelectCell(Sender: TObject; aCol, aRow: Integer;
       Var CanSelect: Boolean);
   private
     fFiles: TIntegers;
+    faRow: Integer;
   public
     Procedure Init(Const Selection: TIntegers);
 
@@ -68,9 +70,14 @@ End;
 
 Procedure TForm4.FormShow(Sender: TObject);
 Begin
-  StringGrid1.Selection := rect(0, 0, 0, 0);
-  StringGrid1.EditorMode := true;
-  StringGrid1.Editor.SetFocus;
+  edit1.SetFocus;
+End;
+
+Procedure TForm4.StringGrid1Click(Sender: TObject);
+Begin
+  If faRow <> -1 Then Begin
+    edit1.text := StringGrid1.Cells[0, faRow];
+  End;
 End;
 
 Procedure TForm4.Button1Click(Sender: TObject);
@@ -94,7 +101,7 @@ Begin
   CheckListBox1.Items.BeginUpdate;
   For i := 0 To CheckListBox1.Items.Count - 1 Do Begin
     If CheckListBox1.Checked[i] Then Begin
-      s := StringGrid1.Cells[0, 0];
+      s := Edit1.text;
       If s <> '' Then s := IncludeTrailingPathDelimiter(s);
       s := s + ExtractFileName(DataBase[fFiles[i]].Filename);
       TryDoMove(fFiles[i], RootFolders[ComboBox2.ItemIndex].RootFolder, s);
@@ -104,41 +111,37 @@ Begin
   CheckListBox1.Items.EndUpdate;
 End;
 
-Procedure TForm4.StringGrid1KeyDown(Sender: TObject; Var Key: Word;
-  Shift: TShiftState);
+Procedure TForm4.Edit1Change(Sender: TObject);
 Var
   s, s2: String;
   i: Integer;
   b: Boolean;
 Begin
-  If StringGrid1.EditorMode Then Begin
-    StringGrid1.BeginUpdate;
-    s := lowercase(StringGrid1.Cells[0, 0]);
-    s2 := StringReplace(s, ' ', '_', [rfReplaceAll]);
-    If s = '' Then Begin
-      For i := 1 To StringGrid1.RowCount - 1 Do Begin
-        StringGrid1.RowHeights[i] := StringGrid1.DefaultRowHeight;
-      End;
-    End
-    Else Begin
-      For i := 1 To StringGrid1.RowCount - 1 Do Begin
-        b := pos(s, lowercase(StringGrid1.Cells[0, i])) <> 0;
-        If Not b Then Begin
-          b := pos(s2, lowercase(StringGrid1.Cells[0, i])) <> 0;
-        End;
-        StringGrid1.RowHeights[i] := ifthen(b, StringGrid1.DefaultRowHeight, 0)
-      End;
+  s := lowercase(Edit1.text);
+  If s = '' Then exit;
+  StringGrid1.BeginUpdate;
+  s2 := StringReplace(s, ' ', '_', [rfReplaceAll]);
+  If s = '' Then Begin
+    For i := 0 To StringGrid1.RowCount - 1 Do Begin
+      StringGrid1.RowHeights[i] := StringGrid1.DefaultRowHeight;
     End;
-    StringGrid1.EndUpdate();
+  End
+  Else Begin
+    For i := 0 To StringGrid1.RowCount - 1 Do Begin
+      b := pos(s, lowercase(StringGrid1.Cells[0, i])) <> 0;
+      If Not b Then Begin
+        b := pos(s2, lowercase(StringGrid1.Cells[0, i])) <> 0;
+      End;
+      StringGrid1.RowHeights[i] := ifthen(b, StringGrid1.DefaultRowHeight, 0)
+    End;
   End;
+  StringGrid1.EndUpdate();
 End;
 
 Procedure TForm4.StringGrid1SelectCell(Sender: TObject; aCol, aRow: Integer;
   Var CanSelect: Boolean);
 Begin
-  If aRow <> 0 Then Begin
-    StringGrid1.Cells[0, 0] := StringGrid1.Cells[0, aRow];
-  End;
+  faRow := aRow;
 End;
 
 Procedure TForm4.Init(Const Selection: TIntegers);
@@ -146,6 +149,7 @@ Var
   i: Integer;
   lf, af: String;
 Begin
+  faRow := -1;
   // Die Root Labels
   ComboBox2.Items.Clear;
   For i := 0 To high(RootFolders) Do Begin
@@ -161,8 +165,8 @@ Begin
     CheckListBox1.Checked[i] := true;
   End;
   StringGrid1.BeginUpdate;
-  StringGrid1.RowCount := 1;
-  StringGrid1.Cells[0, 0] := ExtractFileDir(DataBase[fFiles[0]].Filename);
+  StringGrid1.RowCount := 0;
+  //  StringGrid1.Cells[0, 0] := '';
   lf := '';
   For i := 0 To high(DataBase) Do Begin
     af := ExtractFilePath(DataBase[i].Filename);
@@ -174,7 +178,10 @@ Begin
   End;
   StringGrid1.EndUpdate();
   StringGrid1.AutoSizeColumns;
+  // das muss nach dem Befüllen der Stringgrid sein !
+  Edit1.text := ExtractFileDir(DataBase[fFiles[0]].Filename);
 End;
 
 End.
+
 

@@ -71,4 +71,17 @@ object Form6: TForm6
     TabOrder = 3
     OnClick = Button3Click
   end
+  object SpeedButton3: TSpeedButton
+    Left = 367
+    Height = 32
+    Hint = 'Search / Update Root folders'
+    Top = 8
+    Width = 32
+    Anchors = [akTop, akRight]
+    Images = Form1.ImageList1
+    ImageIndex = 1
+    ShowHint = True
+    ParentShowHint = False
+    OnClick = SpeedButton3Click
+  end
 end

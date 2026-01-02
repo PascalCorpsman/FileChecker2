@@ -103,7 +103,6 @@ Procedure SortFileList(Var aList: TDataSets);
  * -1 = Fehler, nicht gefunden
  * sonst Index in DataBase
  *)
-Function GetIndexOf(Const Filename: String): integer;
 Function GetIndexOf(Const Root, Filename: String): integer;
 
 (*
@@ -380,19 +379,6 @@ Begin
   Quick(0, high(aList));
 End;
 
-Function GetIndexOf(Const Filename: String): integer;
-Var
-  i: Integer;
-Begin
-  result := -1;
-  For i := 0 To high(DataBase) Do Begin
-    If DataBase[i].Filename = Filename Then Begin
-      result := i;
-      exit;
-    End;
-  End;
-End;
-
 Function GetIndexOf(Const Root, Filename: String): integer;
 Var
   i: Integer;
@@ -405,7 +391,6 @@ Begin
       exit;
     End;
   End;
-
 End;
 
 Function RootFolderToRootLabel(Const aRoot: String): String;
@@ -460,8 +445,8 @@ Begin
     sl.add('From;To;');
     For i := 0 To high(RenameList) Do Begin
       sl.add(
-        '"' + RenameList[i].SourceFile + '";' +
-        '"' + RenameList[i].DestFile + '"'
+        '"' + RenameList[i].SourceRoot + RenameList[i].SourceFile + '";' +
+        '"' + RenameList[i].DestRoot + RenameList[i].DestFile + '"'
         );
     End;
   End;
@@ -469,7 +454,7 @@ Begin
     sl.add('Added;"' + info.CopyInfo + '"');
     For i := 0 To high(CopyList) Do Begin
       sl.add(
-        '"' + CopyList[i].FileName + '"'
+        '"' + CopyList[i].Root + CopyList[i].FileName + '"'
         );
     End;
   End;
@@ -478,7 +463,7 @@ Begin
     sl.add('File');
     For i := 0 To high(DelList) Do Begin
       sl.add(
-        '"' + DelList[i].FileName + '"'
+        '"' + DelList[i].Root + DelList[i].FileName + '"'
         );
     End;
   End;
@@ -494,7 +479,7 @@ Begin
   SourceName := DataBase[index].Root + DataBase[index].Filename;
   // Wenn es die Datei gibt und wir sie mittels Rename in unser Temp Verzeichnis
   // Schieben können, machen wir das, damit ists dann "aufgeräumter" ;)
-  If FileExists(SourceName) Then Begin
+  If FileExists(SourceName) And (JobTempFolder <> '') Then Begin
     TmpTarget := JobTempFolder + ExtractFileName(SourceName);
     If RenameFile(SourceName, TmpTarget) Then Begin
       SourceName := TmpTarget;
@@ -517,16 +502,19 @@ Begin
   SourceName := DataBase[index].Root + DataBase[index].Filename;
   If Not FileExists(SourceName) Then Begin
     AddMoveJob(index, TargetRoot, TargetFilename);
+    exit;
   End;
   TargetFolder := ExtractFilePath(TargetFilename);
   // Sind wir mit dem Target Root verbunden ?
   If Not ForceDirectories(TargetRoot + TargetFolder) Then Begin
     AddMoveJob(index, TargetRoot, TargetFilename);
+    exit;
   End;
   TargetName := TargetRoot + TargetFilename;
   // Scheint Alles Verbunden zu sein, geht das Move via Rename ?
   If Not RenameFile(SourceName, TargetName) Then Begin
     AddMoveJob(index, TargetRoot, TargetFilename);
+    exit;
   End;
   // Es hat tatsächlich mit einem "Rename" Geklappt -> DB Updaten und wir sind fertig
   DataBase[index].Filename := TargetFilename;
