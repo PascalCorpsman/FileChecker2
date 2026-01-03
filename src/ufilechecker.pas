@@ -77,6 +77,7 @@ Type
     RealSourceFile: String; // Absoluter Dateiname (inclusive Root), im Einfachsten Fall SourceRoot + SourceFile
     TargetRoot: String; // Ziel Root
     TargetFilename: String; // Ziel Dateiname Relativ zu Ziel Root
+    FileSize: Int64;
   End;
 
 Var
@@ -347,6 +348,7 @@ Begin
     PendingJobs[i].RealSourceFile := IniFile.ReadString('Jobs', 'RealSourceFile' + IntToStr(i), '');
     PendingJobs[i].TargetRoot := IniFile.ReadString('Jobs', 'TargetRoot' + IntToStr(i), '');
     PendingJobs[i].TargetFilename := IniFile.ReadString('Jobs', 'TargetFilename' + IntToStr(i), '');
+    PendingJobs[i].FileSize := IniFile.ReadInt64('Jobs', 'FileSize' + IntToStr(i), 0);
   End;
 End;
 
@@ -362,6 +364,7 @@ Begin
     IniFile.WriteString('Jobs', 'RealSourceFile' + IntToStr(i), PendingJobs[i].RealSourceFile);
     IniFile.WriteString('Jobs', 'TargetRoot' + IntToStr(i), PendingJobs[i].TargetRoot);
     IniFile.WriteString('Jobs', 'TargetFilename' + IntToStr(i), PendingJobs[i].TargetFilename);
+    IniFile.WriteInt64('Jobs', 'FileSize' + IntToStr(i), PendingJobs[i].FileSize);
   End;
 End;
 
@@ -509,6 +512,7 @@ Begin
   job.RealSourceFile := SourceName;
   job.TargetRoot := TargetRoot;
   job.TargetFilename := TargetFilename;
+  job.FileSize := DataBase[index].Size;
   AddJob(job);
 End;
 

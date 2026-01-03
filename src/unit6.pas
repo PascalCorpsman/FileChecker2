@@ -20,7 +20,7 @@ Interface
 
 Uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ComCtrls,
-  Buttons, lNetComponents, ufilechecker;
+  Buttons, Grids, lNetComponents, ufilechecker;
 
 Type
 
@@ -36,6 +36,7 @@ Type
     Label4: TLabel;
     ProgressBar1: TProgressBar;
     SpeedButton3: TSpeedButton;
+    StringGrid1: TStringGrid;
     Procedure Button1Click(Sender: TObject);
     Procedure Button2Click(Sender: TObject);
     Procedure Button3Click(Sender: TObject);
@@ -58,6 +59,7 @@ Implementation
 
 Uses
   ucopycomandercontroller
+  , udirsync
   , unit7 // Job Detail Dialog
   ;
 
@@ -67,9 +69,7 @@ Procedure TForm6.FormCreate(Sender: TObject);
 Begin
   caption := 'Jobs';
   Constraints.MinHeight := Height;
-  Constraints.MaxHeight := Height;
   Constraints.MinWidth := Width;
-  Constraints.MaxWidth := Width;
 End;
 
 Procedure TForm6.SpeedButton3Click(Sender: TObject);
@@ -81,13 +81,13 @@ End;
 
 Procedure TForm6.Button3Click(Sender: TObject);
 Begin
-  // Fragt ob es Jobs abbrechen soll und geht ggf raus
+  // TODO: Fragt ob es Jobs abbrechen soll und geht ggf raus
   close;
 End;
 
 Procedure TForm6.Button2Click(Sender: TObject);
 Begin
-  // Cancel, bricht Jobs ab und geht raus
+  // TODO: Cancel, bricht Jobs ab und geht raus
   fAbort := true;
   Close;
 End;
@@ -135,10 +135,56 @@ Begin
 End;
 
 Procedure TForm6.Init;
+
+  Function RootToIndex(Const aRoot: String): integer;
+  Var
+    i: Integer;
+  Begin
+    result := -1;
+    For i := 0 To high(RootFolders) Do Begin
+      If RootFolders[i].RootFolder = aRoot Then Begin
+        result := i;
+        break;
+      End;
+    End;
+  End;
+
+Const
+  _Out = 0;
+  _In = 1;
+
+Var
+  i, index: Integer;
+  InOut: Array Of Array[0..1] Of int64;
 Begin
   label2.caption := inttostr(length(PendingJobs));
   label4.caption := inttostr(PendingJobsDoable());
-  // TODO: Anzeigen der Liste der Beteiligten "Roots"
+  InOut := Nil;
+  setlength(InOut, Length(RootFolders));
+  For i := 0 To high(InOut) Do Begin
+    InOut[i][_Out] := 0;
+    InOut[i][_In] := 0;
+  End;
+  For i := 0 To high(PendingJobs) Do Begin
+    Case PendingJobs[i].Job Of
+      jMove: Begin
+          index := RootToIndex(PendingJobs[i].SourceRoot);
+          InOut[index][_Out] := InOut[index][_Out] + PendingJobs[i].FileSize;
+          index := RootToIndex(PendingJobs[i].TargetRoot);
+          InOut[index][_In] := InOut[index][_In] + PendingJobs[i].FileSize;
+        End;
+    Else Begin
+        Raise exception.create('Error: TForm6.Init, missing handler for ' + JobDetailToString(PendingJobs[i].Job));
+      End;
+    End;
+  End;
+  StringGrid1.RowCount := length(RootFolders) + 1;
+  For i := 0 To high(RootFolders) Do Begin
+    StringGrid1.Cells[0, i + 1] := RootFolders[i].RootLabel;
+    StringGrid1.Cells[1, i + 1] := FileSizeToString(InOut[i, _Out]);
+    StringGrid1.Cells[2, i + 1] := FileSizeToString(InOut[i, _In]);
+  End;
+  StringGrid1.AutoSizeColumns;
 End;
 
 End.
