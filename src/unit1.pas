@@ -43,7 +43,10 @@ Interface
 
 Uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, Buttons, StdCtrls,
-  ComCtrls, Menus, ExtCtrls, lNetComponents, IniFiles, ufilechecker;
+  ComCtrls, Menus, ExtCtrls, lNetComponents, IniFiles
+  , udirsync
+  , ufilechecker
+  ;
 
 Type
 
@@ -57,6 +60,7 @@ Type
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
+    MenuItem4: TMenuItem;
     PopupMenu1: TPopupMenu;
     Separator1: TMenuItem;
     SpeedButton2: TSpeedButton;
@@ -77,6 +81,7 @@ Type
     Procedure MenuItem1Click(Sender: TObject);
     Procedure MenuItem2Click(Sender: TObject);
     Procedure MenuItem3Click(Sender: TObject);
+    Procedure MenuItem4Click(Sender: TObject);
     Procedure SpeedButton2Click(Sender: TObject);
     Procedure SpeedButton3Click(Sender: TObject);
     Procedure SpeedButton4Click(Sender: TObject);
@@ -118,12 +123,13 @@ Uses LCLType, math, lclintf
   , ucopycomandercontroller
   ;
 
-  { TForm1 }
+{ TForm1 }
 
 Procedure TForm1.FormCreate(Sender: TObject);
 Begin
   Caption := 'Filechecker 2 ver. 0.01, by Corpsman, www.Corpsman.de';
   IniFile := TIniFile.Create(GetAppConfigFile(false, true));
+  Inifile.CacheUpdates := true;
   Constraints.MinWidth := Width;
   Constraints.MinHeight := Height;
   ComboBox1.text := '';
@@ -196,7 +202,7 @@ Begin
   If key = VK_F6 Then MenuItem1Click(Nil);
 
   // F8 = Delete
-  If key = VK_F8 Then showmessage('Todo: delete file');
+  If key = VK_F8 Then MenuItem4Click(Nil);
 
   If key = VK_DOWN Then Begin
     ListBox1.ItemIndex := min(ListBox1.ItemIndex + 1, ListBox1.Count - 1);
@@ -224,13 +230,16 @@ Begin
       ListBox1.Selected[i] := true;
     End;
   End;
+  If (ssCtrl In Shift) And (key = VK_A) Then Begin
+    ListBox1.SelectAll;
+  End;
   key := 0;
 End;
 
 Procedure TForm1.MenuItem1Click(Sender: TObject);
 Begin
   // Move Files to
-  Form4.Init(SelectionToIndexes);
+  Form4.Init(SelectionToIndexes());
   form4.ShowModal;
   ComboBox1Change(Nil); // Die Suchergebnisse müssen ggf angepasst werden
   UpdatePendingJobs; // Falls Jobs entstanden sind muss das auch angezeigt werden
@@ -278,6 +287,52 @@ Begin
     End;
     UpdatePendingJobs;
   End;
+End;
+
+Procedure TForm1.MenuItem4Click(Sender: TObject);
+Var
+  i, j: Integer;
+  de, e, fn: String;
+  DelList: TIntegers;
+  fs: Int64;
+Begin
+  // Delete File
+  If ListBox1.ItemIndex = -1 Then exit;
+  If ListBox1.items[ListBox1.ItemIndex] = SearchInfo Then exit;
+  e := '';
+  de := '';
+  DelList := SelectionToIndexes();
+  fs := 0;
+  // 1. Die Selected Indexe müssen absteigend sein, sonst kommt es beim Löschen zu komischen dingen
+  DelList.sort(true);
+  For i := 0 To high(DelList) Do Begin
+    fn := DataBase[DelList[i]].Root + DataBase[DelList[i]].Filename;
+    If FileExists(fn) Then Begin
+      If DeleteFile(fn) Then Begin
+        // Löschen aus der Datenbank
+        fs := fs + DataBase[DelList[i]].Size;
+        For j := DelList[i] To high(DataBase) - 1 Do Begin
+          DataBase[j] := DataBase[j + 1];
+        End;
+        setlength(DataBase, high(DataBase));
+      End
+      Else Begin
+        de := de + fn + LineEnding;
+      End;
+    End
+    Else Begin
+      e := e + fn + LineEnding;
+    End;
+  End;
+  ComboBox1Change(Nil); // ggf neu Triggern der Suche
+  UpdateSelectedState(); // Auf jeden Fall die DB info aktualisieren ;)
+  If e <> '' Then Begin
+    showmessage('Error, actually only "Online" files can be deleted, could not delete the following files:' + LineEnding + e);
+  End;
+  If de <> '' Then Begin
+    showmessage('Error, was unable to delete the following files:' + LineEnding + de);
+  End;
+  If (e = '') And (de = '') Then showmessage('Deleted ' + FileSizeToString(fs));
 End;
 
 Procedure TForm1.ComboBox1Change(Sender: TObject);
@@ -366,6 +421,7 @@ End;
 
 Procedure TForm1.FormCloseQuery(Sender: TObject; Var CanClose: Boolean);
 Begin
+  Timer1.Enabled := false;
   StoreDataBase;
   StoreQueryHistory;
   StorePendingJobs;
@@ -510,17 +566,20 @@ End;
 
 Function TForm1.SelectionToIndexes: TIntegers;
 Var
-  i: Integer;
+  i, cnt: Integer;
 Begin
   result := Nil;
+  If ListBox1.ItemIndex = -1 Then exit;
   If ListBox1.items[ListBox1.ItemIndex] = SearchInfo Then exit;
-  // Move Files to ..
+  cnt := 0;
+  setlength(result, ListBox1.items.Count);
   For i := 0 To ListBox1.Items.Count - 1 Do Begin
     If ListBox1.Selected[i] Then Begin
-      setlength(result, high(result) + 2);
-      result[high(result)] := Selected[i];
+      result[cnt] := Selected[i];
+      inc(cnt);
     End;
   End;
+  setlength(result, cnt);
 End;
 
 Procedure TForm1.UpdateSelectedState;

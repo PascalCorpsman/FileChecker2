@@ -39,6 +39,12 @@ Type
 
   TIntegers = Array Of Integer;
 
+  { TIntegersHelper }
+
+  TIntegersHelper = Type Helper For Tintegers
+    Procedure Sort(descending: Boolean = false);
+  End;
+
   TStringArrayHelper = Type Helper For TStringArray
     Function Join(Const delimiter: String): String;
   End;
@@ -188,6 +194,47 @@ Begin
   result := StringReplace(result, '++', '+', [rfReplaceAll]);
 End;
 
+{ TIntegersHelper }
+
+Procedure TIntegersHelper.Sort(descending: Boolean);
+  Procedure Quick(li, re: integer);
+  Var
+    l, r, h, p: Integer;
+  Begin
+    If Li < Re Then Begin
+      // Achtung, das Pivotelement darf nur einam vor den While schleifen ausgelesen werden, danach nicht mehr !!
+      p := self[Trunc((li + re) / 2)]; // Auslesen des Pivo Elementes
+      l := Li;
+      r := re;
+      While l < r Do Begin
+        If descending Then Begin
+          While self[l] > p Do
+            inc(l);
+          While self[r] < p Do
+            dec(r);
+        End
+        Else Begin
+          While self[l] < p Do
+            inc(l);
+          While self[r] > p Do
+            dec(r);
+        End;
+        If L <= R Then Begin
+          h := self[l];
+          self[l] := self[r];
+          self[r] := h;
+          inc(l);
+          dec(r);
+        End;
+      End;
+      quick(li, r);
+      quick(l, re);
+    End;
+  End;
+Begin
+  Quick(0, high(self));
+End;
+
 Function TStringArrayHelper.Join(Const delimiter: String): String;
 Var
   i: Integer;
@@ -269,6 +316,7 @@ Begin
   IniFile.WriteString('CopyCommander', 'CMD', CopyCommanderCmd);
 
   inifile.WriteInteger('Search', 'MinCharCount', SearchCharBorder);
+  inifile.UpdateFile;
 End;
 
 Function DataSetToString(Const aDataSet: TDataSet): String;
@@ -376,6 +424,7 @@ Begin
     IniFile.WriteString('Jobs', 'TargetFilename' + IntToStr(i), PendingJobs[i].TargetFilename);
     IniFile.WriteInt64('Jobs', 'FileSize' + IntToStr(i), PendingJobs[i].FileSize);
   End;
+  inifile.UpdateFile;
 End;
 
 Procedure SortFileList(Var aList: TDataSets);

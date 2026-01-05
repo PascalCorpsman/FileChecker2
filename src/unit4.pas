@@ -31,6 +31,7 @@ Type
     Button2: TButton;
     Button3: TButton;
     Button4: TButton;
+    CheckBox1: TCheckBox;
     CheckListBox1: TCheckListBox;
     ComboBox2: TComboBox;
     Edit1: TEdit;
@@ -38,6 +39,7 @@ Type
     Procedure Button1Click(Sender: TObject);
     Procedure Button2Click(Sender: TObject);
     Procedure Button3Click(Sender: TObject);
+    Procedure CheckBox1Click(Sender: TObject);
     Procedure Edit1Change(Sender: TObject);
     Procedure Edit1KeyDown(Sender: TObject; Var Key: Word; Shift: TShiftState);
     Procedure FormCreate(Sender: TObject);
@@ -102,7 +104,12 @@ Begin
   CheckListBox1.Items.BeginUpdate;
   For i := 0 To CheckListBox1.Items.Count - 1 Do Begin
     If CheckListBox1.Checked[i] Then Begin
-      s := Edit1.text;
+      If CheckBox1.Checked Then Begin
+        s := ExtractFilePath(DataBase[fFiles[i]].Filename);
+      End
+      Else Begin
+        s := Edit1.text;
+      End;
       // Fix Pathdelims für das jeweilige OS..
 {$IFDEF Linux}
       s := StringReplace(s, '\', PathDelim, [rfReplaceAll]);
@@ -117,6 +124,14 @@ Begin
     End;
   End;
   CheckListBox1.Items.EndUpdate;
+End;
+
+Procedure TForm4.CheckBox1Click(Sender: TObject);
+Begin
+  If CheckBox1.Checked Then Begin
+    edit1.text := '';
+    StringGrid1.RowCount := 0;
+  End;
 End;
 
 Procedure TForm4.Edit1Change(Sender: TObject);

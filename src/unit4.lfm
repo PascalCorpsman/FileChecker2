@@ -1,7 +1,7 @@
 object Form4: TForm4
-  Left = 323
+  Left = 324
   Height = 421
-  Top = 108
+  Top = 131
   Width = 800
   Caption = 'Form4'
   ClientHeight = 421
@@ -93,5 +93,18 @@ object Form4: TForm4
     Text = 'Edit1'
     OnChange = Edit1Change
     OnKeyDown = Edit1KeyDown
+  end
+  object CheckBox1: TCheckBox
+    Left = 128
+    Height = 22
+    Hint = 'If cheched, the entered path below will be ignored, and the path shown above will be taken'
+    Top = 224
+    Width = 114
+    Anchors = [akLeft, akBottom]
+    Caption = 'preserve path''s'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 8
+    OnClick = CheckBox1Click
   end
 end
