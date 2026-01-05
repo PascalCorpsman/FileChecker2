@@ -92,6 +92,10 @@ Var
   PendingJobs: Array Of TJob = Nil;
   DBChanged: Boolean = false;
 
+  SearchCharBorder: integer = 3;
+  SearchInfo: String = 'Enter at least 3 chars to start search';
+
+
 Procedure LoadSettings;
 Procedure LoadDataBase;
 Procedure LoadPendingJobs;
@@ -239,6 +243,10 @@ Begin
 
   CopyCommanderCmd := IniFile.ReadString('CopyCommander', 'CMD',
     'CopyCommander2'{$IFDEF Windows} + '.exe'{$ENDIF} + ' -enablerest -restport=8080');
+
+  SearchCharBorder := inifile.ReadInteger('Search', 'MinCharCount', 3);
+  SearchInfo := format('Enter at least %d chars to start search', [SearchCharBorder]);
+
 End;
 
 Procedure StoreSettings;
@@ -259,6 +267,8 @@ Begin
   End;
 
   IniFile.WriteString('CopyCommander', 'CMD', CopyCommanderCmd);
+
+  inifile.WriteInteger('Search', 'MinCharCount', SearchCharBorder);
 End;
 
 Function DataSetToString(Const aDataSet: TDataSet): String;

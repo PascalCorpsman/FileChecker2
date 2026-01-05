@@ -43,6 +43,7 @@ Type
     Edit5: TEdit;
     Edit6: TEdit;
     Edit7: TEdit;
+    Edit8: TEdit;
     GroupBox1: TGroupBox;
     GroupBox2: TGroupBox;
     Label1: TLabel;
@@ -53,6 +54,7 @@ Type
     Label6: TLabel;
     Label7: TLabel;
     Label8: TLabel;
+    Label9: TLabel;
     ListBox1: TListBox;
     ListBox2: TListBox;
     SelectDirectoryDialog1: TSelectDirectoryDialog;
@@ -247,7 +249,7 @@ Begin
       listbox2.Items.Add(s);
   End;
   CheckBox1.Checked := IniFile.ReadBool('Search', 'AlwaysJumpToLast', false);
-
+  edit8.text := inttostr(SearchCharBorder);
 End;
 
 Procedure TForm2.LCLToSettings;
@@ -273,11 +275,15 @@ Begin
   End;
 
   IniFile.WriteBool('Search', 'AlwaysJumpToLast', CheckBox1.Checked);
+  SearchCharBorder := strtointdef(edit8.text, 3);
+  IniFile.WriteInteger('Search', 'MinCharCount', SearchCharBorder);
+  SearchInfo := format('Enter at least %d chars to start search', [SearchCharBorder]);
 
   IniFile.WriteInteger('Queries', 'Count', listbox2.Items.Count);
   For i := 0 To listbox2.Items.Count - 1 Do Begin
     IniFile.WriteString('Queries', 'Query' + inttostr(i), listbox2.Items[i]);
   End;
+
 End;
 
 End.

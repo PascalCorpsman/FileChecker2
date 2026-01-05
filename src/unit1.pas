@@ -118,12 +118,6 @@ Uses LCLType, math, lclintf
   , ucopycomandercontroller
   ;
 
-{$IFDEF Windows}
-Const
-  WinSearchCharBorder = 5;
-  WinSearchInfo = 'Enter at least 5 chars to start search';
-{$ENDIF}
-
   { TForm1 }
 
 Procedure TForm1.FormCreate(Sender: TObject);
@@ -159,9 +153,7 @@ Procedure TForm1.ListBox1DblClick(Sender: TObject);
 Begin
   // Detail Infos zum Datensatz aufrufen
   If ListBox1.ItemIndex = -1 Then exit;
-{$IFDEF Windows}
-  If ListBox1.items[ListBox1.ItemIndex] = WinSearchInfo Then exit;
-{$ENDIF}
+  If ListBox1.items[ListBox1.ItemIndex] = SearchInfo Then exit;
   form5.Init(DataBase[Selected[ListBox1.ItemIndex]]);
   form5.ShowModal;
 End;
@@ -177,9 +169,7 @@ Begin
   //    exit;
   //  End;
   If ListBox1.Count = 0 Then exit;
-{$IFDEF Windows}
-  If ListBox1.items[ListBox1.ItemIndex] = WinSearchInfo Then exit;
-{$ENDIF}
+  If ListBox1.items[ListBox1.ItemIndex] = SearchInfo Then exit;
   // Backup eines ggf selected state
   OldSelectedStart := -1;
   OldSelectedEnd := -1;
@@ -254,9 +244,7 @@ Var
 Begin
   // Explore to
   If ListBox1.ItemIndex <> -1 Then Begin
-{$IFDEF Windows}
-    If ListBox1.items[ListBox1.ItemIndex] = WinSearchInfo Then exit;
-{$ENDIF}
+    If ListBox1.items[ListBox1.ItemIndex] = SearchInfo Then exit;
     fn := DataBase[Selected[ListBox1.ItemIndex]].Root + DataBase[Selected[ListBox1.ItemIndex]].Filename;
     openurl(ExtractFileDir(fn));
   End;
@@ -269,9 +257,7 @@ Var
 Begin
   // File Rename
   If ListBox1.ItemIndex = -1 Then exit;
-{$IFDEF Windows}
-  If ListBox1.items[ListBox1.ItemIndex] = WinSearchInfo Then exit;
-{$ENDIF}
+  If ListBox1.items[ListBox1.ItemIndex] = SearchInfo Then exit;
   default := ExtractFileName(DataBase[Selected[ListBox1.ItemIndex]].Filename);
   s := InputBox('Rename', 'File', default);
   // Bei Abbruch wird s zum Default, leerstrings sind nicht erlaubt !
@@ -308,14 +294,6 @@ Begin
     ListBox1.Items.EndUpdate;
     exit;
   End;
-{$IFDEF Windows}
-  If length(s) < WinSearchCharBorder Then Begin
-    UpdateSelectedState;
-    ListBox1.Items.add(WinSearchInfo);
-    ListBox1.Items.EndUpdate;
-    exit;
-  End;
-{$ENDIF}
   // Wir durchsuchen die Datenbank ;)
   If length(Selected) <> length(DataBase) Then Begin
     setlength(Selected, length(DataBase));
@@ -332,6 +310,14 @@ Begin
     delete(f, 1, length(r) + 1);
   End;
   f2 := StringReplace(f, ' ', '_', [rfReplaceAll]);
+
+  If (f <> '*') And (length(f) < SearchCharBorder) Then Begin
+    UpdateSelectedState;
+    ListBox1.Items.add(SearchInfo);
+    ListBox1.Items.EndUpdate;
+    exit;
+  End;
+
   For i := 0 To high(DataBase) Do Begin
     // Falsche Root
     If r <> '' Then Begin
@@ -527,9 +513,7 @@ Var
   i: Integer;
 Begin
   result := Nil;
-{$IFDEF Windows}
-  If ListBox1.items[ListBox1.ItemIndex] = WinSearchInfo Then exit;
-{$ENDIF}
+  If ListBox1.items[ListBox1.ItemIndex] = SearchInfo Then exit;
   // Move Files to ..
   For i := 0 To ListBox1.Items.Count - 1 Do Begin
     If ListBox1.Selected[i] Then Begin
