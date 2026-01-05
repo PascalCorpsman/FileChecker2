@@ -103,6 +103,13 @@ Begin
   For i := 0 To CheckListBox1.Items.Count - 1 Do Begin
     If CheckListBox1.Checked[i] Then Begin
       s := Edit1.text;
+      // Fix Pathdelims für das jeweilige OS..
+{$IFDEF Linux}
+      s := StringReplace(s, '\', PathDelim, [rfReplaceAll]);
+{$ENDIF}
+{$IFDEF Windows}
+      s := StringReplace(s, '/', PathDelim, [rfReplaceAll]);
+{$ENDIF}
       If s <> '' Then s := IncludeTrailingPathDelimiter(s);
       s := s + ExtractFileName(DataBase[fFiles[i]].Filename);
       TryDoMove(fFiles[i], RootFolders[ComboBox2.ItemIndex].RootFolder, s);

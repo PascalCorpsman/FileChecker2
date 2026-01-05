@@ -221,7 +221,7 @@ Var
     RenameList[RenameListCnt].FileSize := CopyList[CopyListIndex].FileSize;
     RenameList[RenameListCnt].DestFile := CopyList[CopyListIndex].FileName;
 {$IFDEF RootField}
-    RenameList[RenameListCnt].SourceRoot := DelList[CopyListIndex].Root;
+    RenameList[RenameListCnt].SourceRoot := DelList[DelListIndex].Root;
     RenameList[RenameListCnt].DestRoot := CopyList[CopyListIndex].Root;
 {$ENDIF}
     inc(RenameListCnt);
