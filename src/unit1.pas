@@ -86,9 +86,12 @@ Type
     Procedure SpeedButton3Click(Sender: TObject);
     Procedure SpeedButton4Click(Sender: TObject);
     Procedure SpeedButton5Click(Sender: TObject);
+    Procedure StatusBar1Click(Sender: TObject);
     Procedure StatusBar1DrawPanel(StatusBar: TStatusBar; Panel: TStatusPanel;
       Const Rect: TRect);
     Procedure StatusBar1Hint(Sender: TObject);
+    Procedure StatusBar1MouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
     Procedure Timer1Timer(Sender: TObject);
   private
     FormShowOnce: Boolean;
@@ -467,6 +470,33 @@ Begin
   UpdatePendingJobs; // Danach dann ..
 End;
 
+Procedure TForm1.StatusBar1Click(Sender: TObject);
+Var
+  Index: Integer;
+  p: TPoint;
+  xmin, xmax, i: integer;
+Begin
+  // Rauskriegen auf welchem Panel die Maus gerade ist.
+  // Warum auch immer die panels kein ClientRect haben, dann machen wir das halt von Hand ;)
+  p := ScreenToClient(Mouse.CursorPos);
+  index := 0;
+  xmin := 0;
+  xmax := 0;
+  For i := 0 To StatusBar1.Panels.Count - 1 Do Begin
+    xmax := xmax + StatusBar1.Panels[i].Width;
+    If (p.x >= xmin) And (p.x <= xmax) Then Begin
+      index := i;
+      break;
+    End;
+    xmin := xmax;
+  End;
+  Case index Of
+    3: Begin
+        OpenURL(JobTempFolder);
+      End;
+  End;
+End;
+
 Procedure TForm1.StatusBar1DrawPanel(StatusBar: TStatusBar;
   Panel: TStatusPanel; Const Rect: TRect);
 Var
@@ -476,7 +506,12 @@ Begin
   index := -1;
   For i := 0 To StatusBar1.Panels.Count - 1 Do Begin
     If panel = StatusBar1.Panels[i] Then Begin
-      index := i + 2; // Oh man ist das ein HACK
+      Case i Of
+        0: index := 2;
+        1: index := 3;
+        2: index := 4;
+        3: index := 13;
+      End;
       break;
     End;
   End;
@@ -509,16 +544,17 @@ Begin
   // Setzen des Passenden Hints als pseudo EBNF ;)
   StatusBar1.Hint := '';
   Case index Of
-    0: Begin
-        StatusBar1.Hint := '<actual selected datasets>/<num of total datasets>';
-      End;
-    1: Begin
-        StatusBar1.Hint := '<num of pending jobs>';
-      End;
-    2: Begin
-        StatusBar1.Hint := '<num of visible root folders>/<num of total root folders>';
-      End;
+    0: StatusBar1.Hint := '<actual selected datasets>/<num of total datasets>';
+    1: StatusBar1.Hint := '<num of pending jobs>';
+    2: StatusBar1.Hint := '<num of visible root folders>/<num of total root folders>';
+    3: StatusBar1.Hint := 'click to open tmp folder';
   End;
+End;
+
+Procedure TForm1.StatusBar1MouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+Begin
+
 End;
 
 Procedure TForm1.Timer1Timer(Sender: TObject);
