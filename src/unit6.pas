@@ -101,8 +101,10 @@ End;
 Procedure TForm6.Button2Click(Sender: TObject);
 Begin
   // Cancel, bricht Jobs ab und geht raus
-  fAbort := true;
-  showmessage('The current job will be finished, than will abort.');
+  If Not Button1.Enabled Then Begin
+    fAbort := true;
+    showmessage('The current job will be finished, than will abort.');
+  End;
   Close;
 End;
 
