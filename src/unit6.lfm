@@ -1,10 +1,10 @@
 object Form6: TForm6
   Left = 323
-  Height = 321
+  Height = 351
   Top = 107
   Width = 407
   Caption = 'Form6'
-  ClientHeight = 321
+  ClientHeight = 351
   ClientWidth = 407
   Position = poScreenCenter
   LCLVersion = '4.99.0.0'
@@ -40,7 +40,7 @@ object Form6: TForm6
   object Button1: TButton
     Left = 8
     Height = 25
-    Top = 218
+    Top = 232
     Width = 391
     Anchors = [akLeft, akRight, akBottom]
     Caption = 'Execute jobs now'
@@ -50,7 +50,7 @@ object Form6: TForm6
   object ProgressBar1: TProgressBar
     Left = 8
     Height = 20
-    Top = 258
+    Top = 288
     Width = 391
     Anchors = [akLeft, akRight, akBottom]
     TabOrder = 1
@@ -58,7 +58,7 @@ object Form6: TForm6
   object Button2: TButton
     Left = 8
     Height = 25
-    Top = 287
+    Top = 317
     Width = 75
     Anchors = [akLeft, akBottom]
     Caption = 'Cancel'
@@ -68,7 +68,7 @@ object Form6: TForm6
   object Button3: TButton
     Left = 324
     Height = 25
-    Top = 287
+    Top = 317
     Width = 75
     Anchors = [akRight, akBottom]
     Caption = 'Ok'
@@ -90,7 +90,7 @@ object Form6: TForm6
   end
   object StringGrid1: TStringGrid
     Left = 8
-    Height = 154
+    Height = 168
     Top = 56
     Width = 391
     Anchors = [akTop, akLeft, akRight, akBottom]
@@ -100,9 +100,7 @@ object Form6: TForm6
         Title.Caption = 'Root'
       end    
       item
-        Title.Alignment = taLeftJustify
         Title.ImageIndex = 11
-        Title.Layout = tlCenter
         Title.Caption = 'Out'
       end    
       item
@@ -112,5 +110,13 @@ object Form6: TForm6
     FixedCols = 0
     TabOrder = 4
     TitleImageList = Form1.ImageList1
+  end
+  object Label5: TLabel
+    Left = 8
+    Height = 16
+    Top = 264
+    Width = 40
+    Anchors = [akLeft, akBottom]
+    Caption = 'Label5'
   end
 end

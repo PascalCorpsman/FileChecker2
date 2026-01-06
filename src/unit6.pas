@@ -34,6 +34,7 @@ Type
     Label2: TLabel;
     Label3: TLabel;
     Label4: TLabel;
+    Label5: TLabel;
     ProgressBar1: TProgressBar;
     SpeedButton3: TSpeedButton;
     StringGrid1: TStringGrid;
@@ -58,7 +59,8 @@ Implementation
 {$R *.lfm}
 
 Uses
-  ucopycomandercontroller
+  LCLType
+  , ucopycomandercontroller
   , udirsync
   , unit7 // Job Detail Dialog
   ;
@@ -81,14 +83,26 @@ End;
 
 Procedure TForm6.Button3Click(Sender: TObject);
 Begin
-  // TODO: Fragt ob es Jobs abbrechen soll und geht ggf raus
+  // Fragt ob es Jobs abbrechen soll und geht ggf raus
+  If Not Button1.Enabled Then Begin
+    Case Application.MessageBox('Jobs are running, abort ?', 'Question', MB_ICONQUESTION Or MB_YESNO) Of
+      id_yes: Begin
+          Button2Click(Nil);
+          exit;
+        End;
+      id_no: Begin
+          exit;
+        End;
+    End;
+  End;
   close;
 End;
 
 Procedure TForm6.Button2Click(Sender: TObject);
 Begin
-  // TODO: Cancel, bricht Jobs ab und geht raus
+  // Cancel, bricht Jobs ab und geht raus
   fAbort := true;
+  showmessage('The current job will be finished, than will abort.');
   Close;
 End;
 
@@ -97,6 +111,7 @@ Var
   cnt, i, j: Integer;
   JobsDone: Array Of Boolean;
 Begin
+  button1.Enabled := false;
   // Execute Jobs
   fAbort := false;
   ProgressBar1.Max := strtoint(label4.caption);
@@ -108,6 +123,7 @@ Begin
     If ExecuteJob(PendingJobs[i]) Then Begin
       JobsDone[i] := true;
       ProgressBar1.Position := ProgressBar1.Position + 1;
+      label5.caption := format('%d/%d', [ProgressBar1.Position, ProgressBar1.Max]);
     End;
     Application.ProcessMessages;
     If fAbort Then Begin
@@ -132,6 +148,7 @@ Begin
   Else Begin
     showmessage(format('Done, was able to finish: %d Jobs', [cnt]));
   End;
+  button1.Enabled := true;
 End;
 
 Procedure TForm6.Init;
@@ -159,6 +176,7 @@ Var
 Begin
   label2.caption := inttostr(length(PendingJobs));
   label4.caption := inttostr(PendingJobsDoable());
+  label5.caption := '';
   InOut := Nil;
   setlength(InOut, Length(RootFolders));
   For i := 0 To high(InOut) Do Begin

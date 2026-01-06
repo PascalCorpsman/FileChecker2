@@ -156,6 +156,7 @@ Begin
   at := GetTickCount64;
   While at + delta_in_ms >= GetTickCount64 Do Begin
     Application.ProcessMessages;
+    sleep(10); // TODO: was hier wohl der Cleverste wert ist ?
   End;
 End;
 
