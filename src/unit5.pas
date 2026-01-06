@@ -47,7 +47,8 @@ Type
   private
 
   public
-    Procedure Init(Const aDataSet: TDataSet);
+    Procedure Init(aDataSetIndex: Integer);
+    Procedure LCLToDataSet(aDataSetIndex: Integer);
   End;
 
 Var
@@ -66,17 +67,26 @@ Begin
   caption := 'File detail';
 End;
 
-Procedure TForm5.Init(Const aDataSet: TDataSet);
+Procedure TForm5.Init(aDataSetIndex: Integer);
 Begin
-  label2.caption := aDataSet.Filename;
-  label4.caption := RootFolderToRootLabel(aDataSet.Root);
-  label6.caption := FileSizeToString(aDataSet.Size);
+  label2.caption := DataBase[aDataSetIndex].Filename;
+  label4.caption := RootFolderToRootLabel(DataBase[aDataSetIndex].Root);
+  label6.caption := FileSizeToString(DataBase[aDataSetIndex].Size);
   // Tatsächliche Einträge in der Datenbank
 //    Rating: TStringArray; // ";" Liste von Freitexten
 //    Categories: TStringArray; // ";" Liste von Freitexten
-//    Comment: String; // Freitext, den der User beliebig setzen kann
-//    Scedule: TDateTime; // 0 = Deaktiviert, <> Zeitpunkt in der Zukunft, ab dem "Comment" gezeigt wird wenn nach Wiedervorlagen gefragt wird
-  label12.caption := FormatDateTime('HH:MM:SS, DD.MM.YYYY', aDataSet.Added);
+  memo1.Text := DataBase[aDataSetIndex].Comment; // Freitext, den der User beliebig setzen kann
+  //    Scedule: TDateTime; // 0 = Deaktiviert, <> Zeitpunkt in der Zukunft, ab dem "Comment" gezeigt wird wenn nach Wiedervorlagen gefragt wird
+  label12.caption := FormatDateTime('HH:MM:SS, DD.MM.YYYY', DataBase[aDataSetIndex].Added);
+End;
+
+Procedure TForm5.LCLToDataSet(aDataSetIndex: Integer);
+Begin
+  // TODO: Hier fehlt noch einiges..
+  If DataBase[aDataSetIndex].Comment <> Memo1.Text Then Begin
+    DataBase[aDataSetIndex].Comment := Memo1.Text;
+    DBChanged := true;
+  End;
 End;
 
 End.

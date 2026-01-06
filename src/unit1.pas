@@ -90,16 +90,16 @@ Type
     Procedure StatusBar1DrawPanel(StatusBar: TStatusBar; Panel: TStatusPanel;
       Const Rect: TRect);
     Procedure StatusBar1Hint(Sender: TObject);
-    Procedure StatusBar1MouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
     Procedure Timer1Timer(Sender: TObject);
   private
+    ResultsAsFolders: Boolean;
     FormShowOnce: Boolean;
     ReportPendingJobsDoable: Boolean;
     Procedure LoadQueryHistory;
     Procedure StoreQueryHistory;
 
     Procedure QueryPendingJobs;
+    Function CursorToPanelIndex: integer;
   public
 
     Function SelectionToIndexes(): TIntegers; // Gibt eine Liste der Indexe der Dateien in der Datenbank aus, welche Aktuell angewählt sind
@@ -126,11 +126,37 @@ Uses LCLType, math, lclintf
   , ucopycomandercontroller
   ;
 
-{ TForm1 }
+Const
+  // see TForm1.StatusBar1Hint for more details ;)
+  PanelIndexDataSetInfo = 0;
+  PanelIndexPendingJobInfo = 1;
+  PanelIndexRootsInfo = 2;
+  PanelIndexSearchResultInfo = 3;
+  PenelIndexOpenTmpFolder = 4;
+
+  ImageIndexOptions = 0;
+  ImageIndexSearch = 1;
+  ImageIndexExploreTo = 2;
+  ImageIndexSkript = 3;
+  ImageIndexConnections = 4;
+  ImageIndexServerSync = 5;
+  ImageIndexDoSkripts = 6;
+  ImageIndexFolderSearch = 7;
+  ImageIndexMove = 8;
+  ImageIndexRefres = 9;
+  ImageIndexFolderAdd = 10;
+  ImageIndexFolderSub = 11;
+  ImageIndexStop = 12;
+  ImageIndexRainbow = 13;
+  ImageIndexFiles = 14;
+  ImageIndexFolder = 15;
+
+  { TForm1 }
 
 Procedure TForm1.FormCreate(Sender: TObject);
 Begin
   Caption := 'Filechecker 2 ver. 0.01, by Corpsman, www.Corpsman.de';
+  ResultsAsFolders := false;
   IniFile := TIniFile.Create(GetAppConfigFile(false, true));
   Inifile.CacheUpdates := true;
   Constraints.MinWidth := Width;
@@ -163,8 +189,11 @@ Begin
   // Detail Infos zum Datensatz aufrufen
   If ListBox1.ItemIndex = -1 Then exit;
   If ListBox1.items[ListBox1.ItemIndex] = SearchInfo Then exit;
-  form5.Init(DataBase[Selected[ListBox1.ItemIndex]]);
-  form5.ShowModal;
+  If Selected[ListBox1.ItemIndex] < 0 Then exit; // Verzeichnisse haben keine Datensätze
+  form5.Init(Selected[ListBox1.ItemIndex]);
+  If form5.ShowModal = mrOK Then Begin
+    form5.LCLToDataSet(Selected[ListBox1.ItemIndex]);
+  End;
 End;
 
 Procedure TForm1.ListBox1KeyDown(Sender: TObject; Var Key: Word;
@@ -242,6 +271,12 @@ End;
 Procedure TForm1.MenuItem1Click(Sender: TObject);
 Begin
   // Move Files to
+  If ListBox1.ItemIndex = -1 Then exit;
+  If ListBox1.items[ListBox1.ItemIndex] = SearchInfo Then exit;
+  If Selected[ListBox1.ItemIndex] < 0 Then Begin
+    showmessage('Move Folder not implemented yet.');
+    exit;
+  End;
   Form4.Init(SelectionToIndexes());
   form4.ShowModal;
   ComboBox1Change(Nil); // Die Suchergebnisse müssen ggf angepasst werden
@@ -255,11 +290,14 @@ Var
   fn: String;
 Begin
   // Explore to
-  If ListBox1.ItemIndex <> -1 Then Begin
-    If ListBox1.items[ListBox1.ItemIndex] = SearchInfo Then exit;
-    fn := DataBase[Selected[ListBox1.ItemIndex]].Root + DataBase[Selected[ListBox1.ItemIndex]].Filename;
-    openurl(ExtractFileDir(fn));
+  If ListBox1.ItemIndex = -1 Then exit;
+  If ListBox1.items[ListBox1.ItemIndex] = SearchInfo Then exit;
+  If Selected[ListBox1.ItemIndex] < 0 Then Begin
+    showmessage('Explore to for folders not implemented yet.');
+    exit;
   End;
+  fn := DataBase[Selected[ListBox1.ItemIndex]].Root + DataBase[Selected[ListBox1.ItemIndex]].Filename;
+  openurl(ExtractFileDir(fn));
 End;
 
 Procedure TForm1.MenuItem3Click(Sender: TObject);
@@ -270,6 +308,10 @@ Begin
   // File Rename
   If ListBox1.ItemIndex = -1 Then exit;
   If ListBox1.items[ListBox1.ItemIndex] = SearchInfo Then exit;
+  If Selected[ListBox1.ItemIndex] < 0 Then Begin
+    showmessage('Folder Rename not implemented yet.');
+    exit;
+  End;
   default := ExtractFileName(DataBase[Selected[ListBox1.ItemIndex]].Filename);
   s := InputBox('Rename', 'File', default);
   // Bei Abbruch wird s zum Default, leerstrings sind nicht erlaubt !
@@ -302,6 +344,10 @@ Begin
   // Delete File
   If ListBox1.ItemIndex = -1 Then exit;
   If ListBox1.items[ListBox1.ItemIndex] = SearchInfo Then exit;
+  If Selected[ListBox1.ItemIndex] < 0 Then Begin
+    showmessage('Delete Folder not implemented yet.');
+    exit;
+  End;
   e := '';
   de := '';
   DelList := SelectionToIndexes();
@@ -339,9 +385,80 @@ Begin
 End;
 
 Procedure TForm1.ComboBox1Change(Sender: TObject);
+
 Var
-  f2, r, f, s: String;
-  i: Integer;
+  Root: String;
+  filename, // Der lowercase Filename
+  filename2, // der Lowercase filename mit " " -> "_"
+  LastFolder: String;
+
+  Procedure AddEntryToList(index: integer);
+  Var
+    folder, FileFolder: String;
+  Begin
+    If ResultsAsFolders Then Begin
+      // Abschneiden des Dateinamens
+      FileFolder := ExcludeTrailingPathDelimiter(ExtractFilePath(DataBase[index].Filename));
+      // Abschneiden des 1. Verzeichnis Namens (Staffel_**)
+      FileFolder := ExcludeTrailingPathDelimiter(ExtractFilePath(FileFolder));
+      If trim(FileFolder) = '' Then Begin
+        FileFolder := ExcludeTrailingPathDelimiter(ExtractFilePath(DataBase[index].Filename));
+      End;
+      If trim(FileFolder) = '' Then Begin
+        // Dateien die direkt im Root folder liegen ..
+        exit;
+      End;
+      folder := DataBase[index].RootLabel + ': ' + FileFolder;
+      (*
+       * Zum Glück sind die Datensätze sortiert, eine pos Prüfung über die Listbox
+       * wäre hier rechenzeit technisch tödlich..
+       *)
+      If folder = LastFolder Then exit;
+      LastFolder := Folder;
+      // If pos(folder, listbox1.Items.Text) <> 0 Then exit;
+      Selected[SelectedCnt] := -1;
+      inc(SelectedCnt);
+      ListBox1.Items.Add(folder);
+    End
+    Else Begin
+      Selected[SelectedCnt] := index;
+      inc(SelectedCnt);
+      ListBox1.Items.Add(DataBase[index].RootLabel + ': ' + DataBase[index].Filename);
+    End;
+  End;
+
+  Procedure SearchForFiles;
+  Var
+    i: Integer;
+  Begin
+    For i := 0 To high(DataBase) Do Begin
+      // Falsche Root
+      If Root <> '' Then Begin
+        If pos(Root, DataBase[i].lRootlabel) = 0 Then Continue;
+      End;
+      // Filename Matcht nicht
+      If (filename <> '*') And (pos(filename2, DataBase[i].lFilename) = 0) And (pos(filename, DataBase[i].lFilename) = 0) Then Continue;
+
+      // TODO: weitere Checks ?
+      AddEntryToList(i);
+    End;
+  End;
+
+  Procedure SearchInComments;
+  Var
+    i: Integer;
+  Begin
+    For i := 0 To high(DataBase) Do Begin
+      // Kommentar Matcht nicht
+      If (filename <> '*') And (pos(filename, lowercase(DataBase[i].Comment)) = 0) Then Continue;
+
+      // TODO: weitere Checks ?
+      AddEntryToList(i);
+    End;
+  End;
+
+Var
+  s: String;
 Begin
   s := lowercase(trim(ComboBox1.Text));
   ListBox1.Items.BeginUpdate;
@@ -361,35 +478,32 @@ Begin
    * EBNF: {<root_label>":"}<file>
    * <file> = * ist die Wildcard für "alles"
    *)
-  r := '';
-  f := s;
-  If pos(':', f) <> 0 Then Begin
-    r := copy(f, 1, pos(':', f) - 1);
-    delete(f, 1, length(r) + 1);
+  Root := '';
+  filename := s;
+  If pos(':', filename) <> 0 Then Begin
+    Root := copy(filename, 1, pos(':', filename) - 1);
+    delete(filename, 1, length(Root) + 1);
   End;
-  f2 := StringReplace(f, ' ', '_', [rfReplaceAll]);
+  filename2 := StringReplace(filename, ' ', '_', [rfReplaceAll]);
 
-  If (f <> '*') And (length(f) < SearchCharBorder) Then Begin
+  If (filename <> '*') And (length(filename) < SearchCharBorder) Then Begin
     UpdateSelectedState;
     ListBox1.Items.add(SearchInfo);
     ListBox1.Items.EndUpdate;
     exit;
   End;
+  LastFolder := '';
 
-  For i := 0 To high(DataBase) Do Begin
-    // Falsche Root
-    If r <> '' Then Begin
-      If pos(r, DataBase[i].lRootlabel) = 0 Then Continue;
+  Case Root Of
+    // Sonder Such Sachen
+    'comment': SearchInComments;
+  Else Begin
+      // das Reguläre suchen über Dateinamen
+      // Root = '', oder eben eine spezielle Root
+      SearchForFiles;
     End;
-    // Filename Matcht nicht
-    If (f <> '*') And (pos(f2, DataBase[i].lFilename) = 0) And (pos(f, DataBase[i].lFilename) = 0) Then Continue;
-
-    // TODO: weitere Checks ?
-
-    Selected[SelectedCnt] := i;
-    inc(SelectedCnt);
-    ListBox1.Items.Add(DataBase[i].RootLabel + ': ' + DataBase[i].Filename);
   End;
+
   ListBox1.Items.EndUpdate;
   If IniFile.ReadBool('Search', 'AlwaysJumpToLast', false) Then Begin
     If ListBox1.Count <> 0 Then ListBox1.ItemIndex := ListBox1.Count - 1;
@@ -459,7 +573,7 @@ End;
 Procedure TForm1.SpeedButton4Click(Sender: TObject);
 Begin
   // Sync Database mit Server
-  // TODO: DB integritätscheck machen -> sind tatsächlich alle Dateien in der DB da wo die DB behauptet ?
+  // TODO: DB integritätscheck machen -> sind tatsächlich alle Dateien in der DB da wo die DB behauptet ? das geht durch neu einlesen am einfachsten ;)
 End;
 
 Procedure TForm1.SpeedButton5Click(Sender: TObject);
@@ -471,27 +585,14 @@ Begin
 End;
 
 Procedure TForm1.StatusBar1Click(Sender: TObject);
-Var
-  Index: Integer;
-  p: TPoint;
-  xmin, xmax, i: integer;
 Begin
-  // Rauskriegen auf welchem Panel die Maus gerade ist.
-  // Warum auch immer die panels kein ClientRect haben, dann machen wir das halt von Hand ;)
-  p := ScreenToClient(Mouse.CursorPos);
-  index := 0;
-  xmin := 0;
-  xmax := 0;
-  For i := 0 To StatusBar1.Panels.Count - 1 Do Begin
-    xmax := xmax + StatusBar1.Panels[i].Width;
-    If (p.x >= xmin) And (p.x <= xmax) Then Begin
-      index := i;
-      break;
-    End;
-    xmin := xmax;
-  End;
-  Case index Of
-    3: Begin
+  Case CursorToPanelIndex() Of
+    PanelIndexSearchResultInfo: Begin
+        ResultsAsFolders := Not ResultsAsFolders;
+        ComboBox1Change(Nil);
+        StatusBar1.Invalidate;
+      End;
+    PenelIndexOpenTmpFolder: Begin
         OpenURL(JobTempFolder);
       End;
   End;
@@ -507,10 +608,18 @@ Begin
   For i := 0 To StatusBar1.Panels.Count - 1 Do Begin
     If panel = StatusBar1.Panels[i] Then Begin
       Case i Of
-        0: index := 2;
-        1: index := 3;
-        2: index := 4;
-        3: index := 13;
+        PanelIndexDataSetInfo: index := PanelIndexRootsInfo;
+        PanelIndexPendingJobInfo: index := PanelIndexSearchResultInfo;
+        PanelIndexRootsInfo: index := PenelIndexOpenTmpFolder;
+        PanelIndexSearchResultInfo: Begin
+            If ResultsAsFolders Then Begin
+              index := ImageIndexFolder;
+            End
+            Else Begin
+              index := ImageIndexFiles;
+            End;
+          End;
+        PenelIndexOpenTmpFolder: index := ImageIndexRainbow;
       End;
       break;
     End;
@@ -522,39 +631,16 @@ Begin
 End;
 
 Procedure TForm1.StatusBar1Hint(Sender: TObject);
-Var
-  Index: Integer;
-  p: TPoint;
-  xmin, xmax, i: integer;
 Begin
-  // Rauskriegen auf welchem Panel die Maus gerade ist.
-  // Warum auch immer die panels kein ClientRect haben, dann machen wir das halt von Hand ;)
-  p := ScreenToClient(Mouse.CursorPos);
-  index := 0;
-  xmin := 0;
-  xmax := 0;
-  For i := 0 To StatusBar1.Panels.Count - 1 Do Begin
-    xmax := xmax + StatusBar1.Panels[i].Width;
-    If (p.x >= xmin) And (p.x <= xmax) Then Begin
-      index := i;
-      break;
-    End;
-    xmin := xmax;
-  End;
   // Setzen des Passenden Hints als pseudo EBNF ;)
   StatusBar1.Hint := '';
-  Case index Of
-    0: StatusBar1.Hint := '<actual selected datasets>/<num of total datasets>';
-    1: StatusBar1.Hint := '<num of pending jobs>';
-    2: StatusBar1.Hint := '<num of visible root folders>/<num of total root folders>';
-    3: StatusBar1.Hint := 'click to open tmp folder';
+  Case CursorToPanelIndex() Of
+    PanelIndexDataSetInfo: StatusBar1.Hint := '<actual selected datasets>/<num of total datasets>';
+    PanelIndexPendingJobInfo: StatusBar1.Hint := '<num of pending jobs>';
+    PanelIndexRootsInfo: StatusBar1.Hint := '<num of visible root folders>/<num of total root folders>';
+    PanelIndexSearchResultInfo: StatusBar1.Hint := 'toggle search results folders / files';
+    PenelIndexOpenTmpFolder: StatusBar1.Hint := 'click to open tmp folder';
   End;
-End;
-
-Procedure TForm1.StatusBar1MouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-Begin
-
 End;
 
 Procedure TForm1.Timer1Timer(Sender: TObject);
@@ -597,6 +683,25 @@ Begin
     If Application.MessageBox('At least one pending job could be executed, start jobs now ?', 'Question', MB_ICONQUESTION Or MB_YESNO) = ID_YES Then Begin
       SpeedButton5.Click;
     End;
+  End;
+End;
+
+Function TForm1.CursorToPanelIndex: integer;
+Var
+  p: TPoint;
+  xmin, xmax, i: integer;
+Begin
+  p := ScreenToClient(Mouse.CursorPos);
+  result := -1;
+  xmin := 0;
+  xmax := 0;
+  For i := 0 To StatusBar1.Panels.Count - 1 Do Begin
+    xmax := xmax + StatusBar1.Panels[i].Width;
+    If (p.x >= xmin) And (p.x <= xmax) Then Begin
+      result := i;
+      break;
+    End;
+    xmin := xmax;
   End;
 End;
 
