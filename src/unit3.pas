@@ -19,8 +19,8 @@ Unit Unit3;
 Interface
 
 Uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, CheckLst, StdCtrls
-  , udirsync, ufilechecker;
+  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, CheckLst, StdCtrls,
+  Buttons, udirsync, ufilechecker;
 
 Type
 
@@ -34,11 +34,13 @@ Type
     CheckListBox1: TCheckListBox;
     Label1: TLabel;
     SaveDialog1: TSaveDialog;
+    SpeedButton1: TSpeedButton;
     Procedure Button1Click(Sender: TObject);
     Procedure Button2Click(Sender: TObject);
     Procedure Button5Click(Sender: TObject);
     Procedure FormCreate(Sender: TObject);
     Procedure FormResize(Sender: TObject);
+    Procedure SpeedButton1Click(Sender: TObject);
   private
     fDataSet: TDataSets;
     MergedBuffers: TFileList;
@@ -58,6 +60,8 @@ Implementation
 
 {$R *.lfm}
 
+Uses unit8;
+
 { TForm3 }
 
 Procedure TForm3.FormCreate(Sender: TObject);
@@ -71,6 +75,49 @@ End;
 Procedure TForm3.FormResize(Sender: TObject);
 Begin
   label1.top := Button1.Top + Button1.Height + 8;
+End;
+
+Procedure TForm3.SpeedButton1Click(Sender: TObject);
+  Procedure Add(a, b: String);
+  Var
+    index: integer;
+  Begin
+    index := form8.StringGrid1.RowCount;
+    form8.StringGrid1.RowCount := index + 1;
+    form8.StringGrid1.Cells[0, index] := a;
+    form8.StringGrid1.Cells[1, index] := b;
+  End;
+Var
+  i: Integer;
+Begin
+  // Explore List (Achtung sollte gleich sein wie: CreateReportFile2
+  form8.StringGrid1.BeginUpdate;
+  form8.StringGrid1.RowCount := 0;
+  If length(RenameList) <> 0 Then Begin
+    add('Renamelist', info.RenameInfo);
+    add('From', 'To');
+    For i := 0 To high(RenameList) Do Begin
+      add(
+        RenameList[i].SourceRoot + RenameList[i].SourceFile,
+        RenameList[i].DestRoot + RenameList[i].DestFile
+        );
+    End;
+  End;
+  If length(CopyList) <> 0 Then Begin
+    add('Added', info.CopyInfo);
+    For i := 0 To high(CopyList) Do Begin
+      add(CopyList[i].Root + CopyList[i].FileName, '');
+    End;
+  End;
+  If length(DelList) <> 0 Then Begin
+    add('Deleted', Info.DelInfo);
+    For i := 0 To high(DelList) Do Begin
+      add(DelList[i].Root + DelList[i].FileName, '');
+    End;
+  End;
+  form8.StringGrid1.AutoSizeColumns;
+  form8.StringGrid1.EndUpdate();
+  form8.ShowModal;
 End;
 
 Procedure TForm3.Button1Click(Sender: TObject);

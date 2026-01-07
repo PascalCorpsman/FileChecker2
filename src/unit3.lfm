@@ -61,11 +61,22 @@ object Form3: TForm3
     Left = 8
     Height = 25
     Top = 256
-    Width = 688
+    Width = 536
     Anchors = [akLeft, akRight, akBottom]
     Caption = 'Export litsts ..'
     TabOrder = 4
     OnClick = Button5Click
+  end
+  object SpeedButton1: TSpeedButton
+    Left = 552
+    Height = 25
+    Top = 256
+    Width = 144
+    Anchors = [akRight, akBottom]
+    Caption = 'Explore lists ...'
+    Images = Form1.ImageList1
+    ImageIndex = 1
+    OnClick = SpeedButton1Click
   end
   object SaveDialog1: TSaveDialog
     DefaultExt = '.csv'

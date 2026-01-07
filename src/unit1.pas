@@ -122,7 +122,8 @@ Uses LCLType, math, lclintf
   , unit4 // Move Files Dialog
   , unit5 // Detail Info Dialog
   , unit6 // Job Execute Dialog
-  //  , unit7 // Show pending Jobs Details
+  // , unit7 // Show pending Jobs Details
+  // , unit8 // Detail Scan Rootfolder Dialog
   , ucopycomandercontroller
   ;
 
@@ -287,17 +288,24 @@ End;
 
 Procedure TForm1.MenuItem2Click(Sender: TObject);
 Var
-  fn: String;
+  fn, s, rootLabel, folder: String;
 Begin
   // Explore to
   If ListBox1.ItemIndex = -1 Then exit;
   If ListBox1.items[ListBox1.ItemIndex] = SearchInfo Then exit;
   If Selected[ListBox1.ItemIndex] < 0 Then Begin
-    showmessage('Explore to for folders not implemented yet.');
-    exit;
+    // Explore to a selected folder
+    s := ListBox1.items[ListBox1.ItemIndex];
+    rootLabel := trim(copy(s, 1, pos(':', s) - 1));
+    folder := trim(copy(s, pos(':', s) + 1, length(s)));
+    folder := RootLabelToRootFolder(rootLabel) + folder;
+  End
+  Else Begin
+    // Explore to a selected file folder
+    fn := DataBase[Selected[ListBox1.ItemIndex]].Root + DataBase[Selected[ListBox1.ItemIndex]].Filename;
+    folder := ExtractFileDir(fn);
   End;
-  fn := DataBase[Selected[ListBox1.ItemIndex]].Root + DataBase[Selected[ListBox1.ItemIndex]].Filename;
-  openurl(ExtractFileDir(fn));
+  openurl(folder);
 End;
 
 Procedure TForm1.MenuItem3Click(Sender: TObject);

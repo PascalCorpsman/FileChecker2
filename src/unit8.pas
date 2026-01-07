@@ -12,37 +12,44 @@
 (*               source file of the project.                                  *)
 (*                                                                            *)
 (******************************************************************************)
-Program FileChecker2;
+Unit Unit8;
 
-{$MODE objfpc}{$H+}
+{$MODE ObjFPC}{$H+}
+
+Interface
 
 Uses
-{$IFDEF UNIX}
-  cthreads,
-{$ENDIF}
-{$IFDEF HASAMIGA}
-  athreads,
-{$ENDIF}
-  Interfaces, // this includes the LCL widgetset
-  Forms, lnetvisual, Unit1, Unit2, Unit3, unit4, unit5, Unit6, Unit7, Unit8;
+  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, Grids;
 
-{$R *.res}
+Type
 
+  { TForm8 }
+
+  TForm8 = Class(TForm)
+    Button1: TButton;
+    StringGrid1: TStringGrid;
+    Procedure FormCreate(Sender: TObject);
+  private
+
+  public
+
+  End;
+
+Var
+  Form8: TForm8;
+
+Implementation
+
+{$R *.lfm}
+
+{ TForm8 }
+
+Procedure TForm8.FormCreate(Sender: TObject);
 Begin
-  RequireDerivedFormResource := True;
-  Application.Scaled := True;
-{$PUSH}{$WARN 5044 OFF}
-  Application.MainFormOnTaskbar := True;
-{$POP}
-  Application.Initialize;
-  Application.CreateForm(TForm1, Form1);
-  Application.CreateForm(TForm2, Form2);
-  Application.CreateForm(TForm3, Form3);
-  Application.CreateForm(TForm4, Form4);
-  Application.CreateForm(TForm5, Form5);
-  Application.CreateForm(TForm6, Form6);
-  Application.CreateForm(TForm7, Form7);
-  Application.CreateForm(TForm8, Form8);
-  Application.Run;
+  caption := 'Diff view';
+  button1.Align := alBottom;
+  StringGrid1.Align := alClient;
+End;
+
 End.
 

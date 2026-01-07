@@ -136,9 +136,10 @@ Begin
     (pos(Separator, edit2.text) <> 0) Or
     (pos(Separator, edit5.text) <> 0) Or
     (pos(Divider, edit1.text) <> 0) Or
-    (pos(Divider, edit2.text) <> 0);
+    (pos(Divider, edit2.text) <> 0) Or
+    (pos(':', edit2.text) <> 0);
   If b Then Begin
-    Showmessage('Tab and ; are not allowed to be used.');
+    Showmessage('Tab or ";" or ":" are not allowed to be used.');
     exit;
   End;
   For i := 0 To ListBox1.Items.Count - 1 Do Begin

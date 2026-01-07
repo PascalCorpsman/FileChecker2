@@ -123,6 +123,7 @@ Function GetIndexOf(Const Root, Filename: String): integer;
  * '' = fehler
  *)
 Function RootFolderToRootLabel(Const aRoot: String): String;
+Function RootLabelToRootFolder(Const aLabel: String): String;
 
 Procedure Nop(); // Just for debugging ;)
 
@@ -486,6 +487,19 @@ Begin
   End;
 End;
 
+Function RootLabelToRootFolder(Const aLabel: String): String;
+Var
+  i: Integer;
+Begin
+  result := '';
+  For i := 0 To high(RootFolders) Do Begin
+    If aLabel = RootFolders[i].RootLabel Then Begin
+      result := RootFolders[i].RootFolder;
+      exit;
+    End;
+  End;
+End;
+
 Procedure AddJob(Const aJob: TJob);
 Var
   Index: Integer;
@@ -540,7 +554,6 @@ Begin
   End;
   If length(DelList) <> 0 Then Begin
     sl.add('Deleted;"' + Info.DelInfo + '"');
-    sl.add('File');
     For i := 0 To high(DelList) Do Begin
       sl.add(
         '"' + DelList[i].Root + DelList[i].FileName + '"'
