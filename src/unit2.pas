@@ -37,6 +37,7 @@ Type
     Button9: TButton;
     CheckBox1: TCheckBox;
     Edit1: TEdit;
+    Edit10: TEdit;
     Edit2: TEdit;
     Edit3: TEdit;
     Edit4: TEdit;
@@ -44,9 +45,12 @@ Type
     Edit6: TEdit;
     Edit7: TEdit;
     Edit8: TEdit;
+    Edit9: TEdit;
     GroupBox1: TGroupBox;
     GroupBox2: TGroupBox;
     Label1: TLabel;
+    Label10: TLabel;
+    Label11: TLabel;
     Label2: TLabel;
     Label3: TLabel;
     Label4: TLabel;

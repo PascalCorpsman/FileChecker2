@@ -1,18 +1,18 @@
 object Form2: TForm2
   Left = 323
-  Height = 506
+  Height = 532
   Top = 107
-  Width = 640
+  Width = 636
   Caption = 'Form2'
-  ClientHeight = 506
-  ClientWidth = 640
+  ClientHeight = 532
+  ClientWidth = 636
   Position = poScreenCenter
   LCLVersion = '4.99.0.0'
   OnCreate = FormCreate
   object Button1: TButton
     Left = 459
     Height = 25
-    Top = 469
+    Top = 496
     Width = 75
     Caption = 'Cancel'
     ModalResult = 2
@@ -21,7 +21,7 @@ object Form2: TForm2
   object Button2: TButton
     Left = 544
     Height = 25
-    Top = 469
+    Top = 496
     Width = 75
     Caption = 'OK'
     ModalResult = 1
@@ -184,11 +184,11 @@ object Form2: TForm2
   end
   object GroupBox2: TGroupBox
     Left = 8
-    Height = 88
+    Height = 160
     Top = 336
     Width = 240
     Caption = ' Database server '
-    ClientHeight = 71
+    ClientHeight = 143
     ClientWidth = 238
     TabOrder = 6
     object Label6: TLabel
@@ -199,7 +199,7 @@ object Form2: TForm2
       Caption = 'IP:'
     end
     object Edit6: TEdit
-      Left = 72
+      Left = 80
       Height = 26
       Top = 6
       Width = 152
@@ -214,25 +214,57 @@ object Form2: TForm2
       Caption = 'Port:'
     end
     object Edit7: TEdit
-      Left = 72
+      Left = 80
       Height = 26
       Top = 40
       Width = 152
       TabOrder = 1
       Text = 'Edit7'
     end
+    object Label10: TLabel
+      Left = 8
+      Height = 16
+      Top = 82
+      Width = 64
+      Caption = 'Username:'
+    end
+    object Label11: TLabel
+      Left = 8
+      Height = 16
+      Top = 116
+      Width = 61
+      Caption = 'Password:'
+    end
+    object Edit9: TEdit
+      Left = 80
+      Height = 26
+      Top = 106
+      Width = 152
+      EchoMode = emPassword
+      PasswordChar = '*'
+      TabOrder = 2
+      Text = 'Edit9'
+    end
+    object Edit10: TEdit
+      Left = 80
+      Height = 26
+      Top = 72
+      Width = 152
+      TabOrder = 3
+      Text = 'Edit10'
+    end
   end
   object ListBox2: TListBox
-    Left = 264
+    Left = 272
     Height = 65
     Top = 359
-    Width = 312
+    Width = 304
     ItemHeight = 0
     TabOrder = 7
     TopIndex = -1
   end
   object Label8: TLabel
-    Left = 264
+    Left = 272
     Height = 16
     Top = 336
     Width = 83
@@ -248,25 +280,25 @@ object Form2: TForm2
     OnClick = Button7Click
   end
   object CheckBox1: TCheckBox
-    Left = 8
+    Left = 272
     Height = 22
-    Top = 472
+    Top = 464
     Width = 219
     Caption = 'Always jump to last search result'
     TabOrder = 9
   end
   object Label9: TLabel
-    Left = 8
+    Left = 272
     Height = 16
-    Top = 450
+    Top = 442
     Width = 178
     Caption = 'Min Charcount to start search'
   end
   object Edit8: TEdit
-    Left = 192
+    Left = 512
     Height = 26
-    Top = 440
-    Width = 38
+    Top = 432
+    Width = 64
     TabOrder = 10
     Text = 'Edit8'
   end
