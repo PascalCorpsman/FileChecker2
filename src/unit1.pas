@@ -125,6 +125,7 @@ Uses LCLType, math, lclintf
   , unit6 // Job Execute Dialog
   // , unit7 // Show pending Jobs Details
   // , unit8 // Detail Scan Rootfolder Dialog
+  , unit9 // Sync with server
   , ucopycomandercontroller
   ;
 
@@ -583,6 +584,7 @@ Procedure TForm1.SpeedButton4Click(Sender: TObject);
 Begin
   // Sync Database mit Server
   // TODO: DB integritätscheck machen -> sind tatsächlich alle Dateien in der DB da wo die DB behauptet ? das geht durch neu einlesen am einfachsten ;)
+  form9.ShowModal;
 End;
 
 Procedure TForm1.SpeedButton5Click(Sender: TObject);

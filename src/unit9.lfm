@@ -1,0 +1,48 @@
+object Form9: TForm9
+  Left = 340
+  Height = 91
+  Top = 118
+  Width = 250
+  Caption = 'Form9'
+  ClientHeight = 91
+  ClientWidth = 250
+  Position = poScreenCenter
+  LCLVersion = '4.99.0.0'
+  OnCreate = FormCreate
+  object SpeedButton4: TSpeedButton
+    Left = 88
+    Height = 32
+    Hint = 'Upload'
+    Top = 8
+    Width = 32
+    Anchors = [akTop, akRight]
+    Images = Form1.ImageList1
+    ImageIndex = 16
+    ShowHint = True
+    ParentShowHint = False
+    OnClick = SpeedButton4Click
+  end
+  object SpeedButton5: TSpeedButton
+    Left = 128
+    Height = 32
+    Hint = 'Download and sync'
+    Top = 8
+    Width = 32
+    Anchors = [akTop, akRight]
+    Images = Form1.ImageList1
+    ImageIndex = 17
+    ShowHint = True
+    ParentShowHint = False
+    OnClick = SpeedButton5Click
+  end
+  object Button1: TButton
+    Left = 8
+    Height = 25
+    Top = 56
+    Width = 234
+    Anchors = [akLeft, akRight, akBottom]
+    Caption = 'Close'
+    ModalResult = 1
+    TabOrder = 0
+  end
+end
