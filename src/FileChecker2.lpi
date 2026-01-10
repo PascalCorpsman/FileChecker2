@@ -21,6 +21,12 @@
     </RunParams>
     <RequiredPackages>
       <Item>
+        <PackageName Value="dcpcrypt_laz"/>
+      </Item>
+      <Item>
+        <PackageName Value="dcpcrypt"/>
+      </Item>
+      <Item>
         <PackageName Value="lnetvisual"/>
       </Item>
       <Item>
@@ -120,6 +126,10 @@
         <ComponentName Value="Form8"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Unit8"/>
+      </Unit>
+      <Unit>
+        <Filename Value="usslconnector.pas"/>
+        <IsPartOfProject Value="True"/>
       </Unit>
     </Units>
   </ProjectOptions>

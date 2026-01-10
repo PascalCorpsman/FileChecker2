@@ -19,7 +19,8 @@ Unit Unit2;
 Interface
 
 Uses
-  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ufilechecker;
+  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls,
+  ufilechecker, usslconnector;
 
 Type
 
@@ -27,6 +28,8 @@ Type
 
   TForm2 = Class(TForm)
     Button1: TButton;
+    Button10: TButton;
+    Button11: TButton;
     Button2: TButton;
     Button3: TButton;
     Button4: TButton;
@@ -62,6 +65,8 @@ Type
     ListBox1: TListBox;
     ListBox2: TListBox;
     SelectDirectoryDialog1: TSelectDirectoryDialog;
+    Procedure Button10Click(Sender: TObject);
+    Procedure Button11Click(Sender: TObject);
     Procedure Button3Click(Sender: TObject);
     Procedure Button4Click(Sender: TObject);
     Procedure Button5Click(Sender: TObject);
@@ -123,6 +128,48 @@ Begin
   If SelectDirectoryDialog1.Execute Then Begin
     edit1.text := IncludeTrailingPathDelimiter(SelectDirectoryDialog1.FileName);
   End;
+End;
+
+Procedure TForm2.Button10Click(Sender: TObject);
+Begin
+  If Login(Edit6.text, edit7.text, edit10.text, edit9.text) Then Begin
+    showmessage('Login succeed.');
+  End
+  Else Begin
+    showmessage('Testlogin failed.');
+  End;
+  Logout;
+End;
+
+Procedure TForm2.Button11Click(Sender: TObject);
+Var
+  OldPW, NewPW: String;
+Begin
+  OldPW := PasswordBox('Old password', 'Please enter old password');
+  If OldPW = '' Then exit;
+  NewPW := PasswordBox('New password', 'Please enter New password');
+  If NewPW = '' Then exit;
+  If OldPW = NewPW Then Begin
+    showmessage('Error, no change.');
+    exit;
+  End;
+  If trim(NewPW) = '' Then Begin
+    showmessage('Error, new password is only space empty.');
+    exit;
+  End;
+  If Login(Edit6.text, edit7.text, edit10.text, OldPW) Then Begin
+    If SetPassword(NewPW) Then Begin
+      edit9.text := NewPW;
+      showmessage('Login succeed.');
+    End
+    Else Begin
+      showmessage('Failed to set new password.');
+    End;
+  End
+  Else Begin
+    showmessage('Login failed.');
+  End;
+  Logout;
 End;
 
 Procedure TForm2.Button4Click(Sender: TObject);
@@ -255,6 +302,11 @@ Begin
   End;
   CheckBox1.Checked := IniFile.ReadBool('Search', 'AlwaysJumpToLast', false);
   edit8.text := inttostr(SearchCharBorder);
+
+  edit6.text := IniFile.ReadString('Server', 'URL', 'https://127.0.0.1');
+  edit7.text := IniFile.ReadString('Server', 'Port', '8443');
+  edit10.text := IniFile.ReadString('Server', 'Username', '');
+  edit9.text := IniFile.ReadString('Server', 'Password', '');
 End;
 
 Procedure TForm2.LCLToSettings;
@@ -289,6 +341,10 @@ Begin
     IniFile.WriteString('Queries', 'Query' + inttostr(i), listbox2.Items[i]);
   End;
 
+  IniFile.WriteString('Server', 'URL', edit6.text);
+  IniFile.WriteString('Server', 'Port', edit7.text);
+  IniFile.WriteString('Server', 'Username', edit10.text);
+  IniFile.WriteString('Server', 'Password', edit9.text);
 End;
 
 End.
