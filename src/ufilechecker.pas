@@ -101,7 +101,6 @@ Var
   SearchCharBorder: integer = 3;
   SearchInfo: String = 'Enter at least 3 chars to start search';
 
-
 Procedure LoadSettings;
 Procedure LoadDataBase;
 Procedure LoadPendingJobs;
@@ -153,6 +152,8 @@ Function JobDetailToString(aDetail: TJobDetail): String;
 Function DataBaseFilesAsTFileList(Const AvailableRoots: TStringArray = Nil): TFileList;
 
 Function StringToDataSet(Const aDataSet: String): TDataSet;
+
+Function FixPathDelims(aFileFolder: String): String;
 
 Implementation
 
@@ -287,7 +288,7 @@ Begin
   cnt := IniFile.ReadInteger('RootFolders', 'Count', 0);
   setlength(RootFolders, cnt);
   For i := 0 To cnt - 1 Do Begin
-    RootFolders[i].RootFolder := IniFile.ReadString('RootFolders', 'Folder' + inttostr(i), '');
+    RootFolders[i].RootFolder := IncludeTrailingPathDelimiter(IniFile.ReadString('RootFolders', 'Folder' + inttostr(i), ''));
     RootFolders[i].RootLabel := IniFile.ReadString('RootFolders', 'Label' + inttostr(i), '');
     ecnt := IniFile.ReadInteger('RootFolders', 'ExcludeCount' + inttostr(i), 0);
     setlength(RootFolders[i].Excludes, ecnt);
@@ -362,6 +363,17 @@ Begin
   result.Comment := DeSerializeString(sa[5]);
   result.Scedule := StrToFloat(sa[6], fs);
   result.Added := StrToFloat(sa[7], fs);
+End;
+
+Function FixPathDelims(aFileFolder: String): String;
+Begin
+  result := aFileFolder;
+{$IFDEF Windows}
+  result := StringReplace(result, '/', PathDelim, [rfReplaceAll]);
+{$ENDIF}
+{$IFDEF Linux}
+  result := StringReplace(result, '\', PathDelim, [rfReplaceAll]);
+{$ENDIF}
 End;
 
 Procedure LoadDataBase;

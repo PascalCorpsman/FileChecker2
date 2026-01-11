@@ -12,43 +12,56 @@
 (*               source file of the project.                                  *)
 (*                                                                            *)
 (******************************************************************************)
-Program FileChecker2;
+Unit Unit10;
 
-{$MODE objfpc}{$H+}
+{$MODE ObjFPC}{$H+}
+
+Interface
 
 Uses
-{$IFDEF UNIX}
-  cthreads,
-{$ENDIF}
-{$IFDEF HASAMIGA}
-  athreads,
-{$ENDIF}
-  Interfaces, // this includes the LCL widgetset
-  Forms, lnetvisual, Unit1, Unit2, Unit3, unit4, unit5, Unit6, Unit7, Unit8,
-  Unit9, Unit10;
+  Classes, SysUtils, Forms, Controls, Graphics, Dialogs, ExtCtrls, StdCtrls;
 
-{$R *.res}
+Type
 
+  { TForm10 }
+
+  TForm10 = Class(TForm)
+    Button1: TButton;
+    Button2: TButton;
+    RadioGroup1: TRadioGroup;
+    Procedure FormCreate(Sender: TObject);
+  private
+
+  public
+    Procedure InitWith(Const list: TStringList);
+
+  End;
+
+Var
+  Form10: TForm10;
+
+Implementation
+
+{$R *.lfm}
+
+{ TForm10 }
+
+Procedure TForm10.FormCreate(Sender: TObject);
 Begin
-{$IF declared(UseHeapTrace)}
-  GlobalSkipIfNoLeaks := True; // supported as of debugger version 3.2.0
-{$ENDIF}
-  RequireDerivedFormResource := True;
-  Application.Scaled := True;
-{$PUSH}{$WARN 5044 OFF}
-  Application.MainFormOnTaskbar := True;
-{$POP}
-  Application.Initialize;
-  Application.CreateForm(TForm1, Form1);
-  Application.CreateForm(TForm2, Form2);
-  Application.CreateForm(TForm3, Form3);
-  Application.CreateForm(TForm4, Form4);
-  Application.CreateForm(TForm5, Form5);
-  Application.CreateForm(TForm6, Form6);
-  Application.CreateForm(TForm7, Form7);
-  Application.CreateForm(TForm8, Form8);
-  Application.CreateForm(TForm9, Form9);
-  Application.CreateForm(TForm10, Form10);
-  Application.Run;
+  caption := 'Select database';
+  RadioGroup1.Caption := '';
+End;
+
+Procedure TForm10.InitWith(Const list: TStringList);
+Var
+  i: Integer;
+Begin
+  RadioGroup1.Items.Clear;
+  For i := 0 To list.Count - 1 Do Begin
+    RadioGroup1.Items.Add(list[i]);
+  End;
+  If RadioGroup1.Items.Count <> 0 Then RadioGroup1.ItemIndex := 0;
+End;
+
 End.
 

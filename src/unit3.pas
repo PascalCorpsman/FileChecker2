@@ -48,9 +48,11 @@ Type
     RenameList: TRenameList;
     info: TReportInfos;
     Procedure GenerateResults();
+    Procedure CleanFromRoots(Var alist: TFileList); overload;
+    Procedure CleanFromRoots(Var alist: TRenameList); overload;
   public
     Procedure Init;
-    Procedure GenerateResultsWith(Const aDataBaseFiles, aMergedBuffers: TFileList);
+    Procedure GenerateResultsWith(RemoteDatabaseName: String; Const aDataBaseFiles, aMergedBuffers: TFileList);
   End;
 
 Var
@@ -264,34 +266,18 @@ Begin
   Label1.Caption := '';
 End;
 
-Procedure TForm3.GenerateResultsWith(Const aDataBaseFiles,
-  aMergedBuffers: TFileList);
+Procedure TForm3.GenerateResultsWith(RemoteDatabaseName: String;
+  Const aDataBaseFiles, aMergedBuffers: TFileList);
 Begin
+  Label1.Caption := 'Diff ' + RemoteDatabaseName + ' to actual database:';
   DataBaseFiles := aDataBaseFiles;
   MergedBuffers := aMergedBuffers;
+  CleanFromRoots(DataBaseFiles);
+  CleanFromRoots(MergedBuffers);
   GenerateResults();
 End;
 
 Procedure TForm3.GenerateResults;
-
-  Procedure CleanFromRoots(Var alist: TFileList);
-  Var
-    i: Integer;
-  Begin
-    For i := 0 To high(alist) Do Begin
-      delete(alist[i].FileName, 1, length(alist[i].Root))
-    End;
-  End;
-
-  Procedure CleanFromRoots(Var alist: TRenameList);
-  Var
-    i: Integer;
-  Begin
-    For i := 0 To high(alist) Do Begin
-      delete(alist[i].SourceFile, 1, length(alist[i].SourceRoot));
-      delete(alist[i].DestFile, 1, length(alist[i].DestRoot));
-    End;
-  End;
 Begin
   RenameList := Nil;
   CopyList := Nil;
@@ -318,7 +304,37 @@ Begin
       , length(DelList), FileSizeToString(FileListToSize(DelList))
       , (length(MergedBuffers) - (length(CopyList) + length(RenameList)))
       ]);
+End;
 
+Procedure TForm3.CleanFromRoots(Var alist: TFileList);
+Var
+  i: Integer;
+Begin
+  For i := 0 To high(alist) Do Begin
+    If alist[i].Root <> '' Then Begin
+      delete(alist[i].FileName, 1, length(alist[i].Root));
+      // Verhindert "fehler" bei mehrfach aufrufen von CleanFromRoots
+      alist[i].Root := '';
+    End;
+  End;
+End;
+
+Procedure TForm3.CleanFromRoots(Var alist: TRenameList);
+Var
+  i: Integer;
+Begin
+  For i := 0 To high(alist) Do Begin
+    If alist[i].SourceRoot <> '' Then Begin
+      delete(alist[i].SourceFile, 1, length(alist[i].SourceRoot));
+      // Verhindert "fehler" bei mehrfach aufrufen von CleanFromRoots
+      alist[i].SourceRoot := '';
+    End;
+    If alist[i].DestRoot <> '' Then Begin
+      delete(alist[i].DestFile, 1, length(alist[i].DestRoot));
+      // Verhindert "fehler" bei mehrfach aufrufen von CleanFromRoots
+      alist[i].DestRoot := '';
+    End;
+  End;
 End;
 
 End.

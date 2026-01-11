@@ -45,7 +45,7 @@ Implementation
 
 {$R *.lfm}
 
-Uses LCLType, usslconnector, udirsync, ufilechecker, unit3;
+Uses LCLType, usslconnector, udirsync, ufilechecker, unit3, Unit10;
 
 { TForm9 }
 
@@ -112,7 +112,21 @@ Begin
     Logout;
     exit;
   End;
-  m := DownloadDB();
+  sl := GetDBList();
+  If Not assigned(sl) Then Begin
+    showmessage('Error, unable to load database list.');
+    Logout;
+    exit;
+  End;
+  If sl.Count = 0 Then Begin
+    showmessage('Error, no databases on the server available.');
+    Logout;
+    exit;
+  End;
+  form10.InitWith(sl);
+  sl.free;
+  If form10.showmodal <> mrOK Then exit;
+  m := DownloadDB(form10.RadioGroup1.Items[form10.RadioGroup1.ItemIndex]);
   If Not assigned(m) Then Begin
     showmessage('Error, unable to download database.');
     exit;
@@ -124,12 +138,12 @@ Begin
   setlength(LoadedDataBaseFiles, sl.Count);
   For i := 0 To sl.Count - 1 Do Begin
     d := StringToDataSet(sl[i]);
-    LoadedDataBaseFiles[i].FileName := d.Filename;
+    LoadedDataBaseFiles[i].FileName := RootFolders[0].RootFolder + FixPathDelims(d.Filename);
     LoadedDataBaseFiles[i].FileSize := d.Size;
     LoadedDataBaseFiles[i].Root := RootFolders[0].RootFolder;
   End;
   sl.free;
-  form3.GenerateResultsWith(DataBaseFilesAsTFileList(Nil), LoadedDataBaseFiles);
+  form3.GenerateResultsWith(form10.RadioGroup1.Items[form10.RadioGroup1.ItemIndex], DataBaseFilesAsTFileList(Nil), LoadedDataBaseFiles);
   form3.ShowModal;
   ModalResult := mrOK
 End;

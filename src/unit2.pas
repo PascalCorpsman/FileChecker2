@@ -200,7 +200,7 @@ Begin
     End;
   End;
   setlength(fRootFolders, high(fRootFolders) + 2);
-  fRootFolders[high(fRootFolders)].RootFolder := Edit1.Text;
+  fRootFolders[high(fRootFolders)].RootFolder := IncludeTrailingPathDelimiter(Edit1.Text);
   fRootFolders[high(fRootFolders)].RootLabel := Edit2.Text;
   sa := trim(Edit5.text).Split(';');
   cnt := 0;

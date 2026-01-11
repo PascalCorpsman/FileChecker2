@@ -13,12 +13,13 @@ Function Login(URL, Port, UserName, Password: String): Boolean;
 
 Procedure Logout;
 
-Function DownloadDB(): TMemorystream;
+Function DownloadDB(DBUsername: String): TMemorystream;
 Function SendDB(Const db: TStream): Boolean;
 
 Function SetPassword(NewPassword: String): Boolean;
 
 Function ReloadSettings(): Boolean;
+Function GetDBList(): TStringList;
 
 Implementation
 
@@ -150,17 +151,25 @@ Begin
   LoggedIn := false;
 End;
 
-Function DownloadDB: TMemorystream;
+Function DownloadDB(DBUsername: String): TMemorystream;
 Var
   db, dbString: String;
+  m: TMemoryStream;
 Begin
   result := Nil;
   If Not LoggedIn Then exit;
+  DBString := EncodeStringBase64(DBUsername);
+  m := TMemoryStream.Create;
+  m.Write(DBString[1], length(DBString));
+  m.Position := 0;
   Try
+    client.RequestBody := m;
     db := client.Get(BaseURL + '/getdb');
   Except
+    m.free;
     exit;
   End;
+  m.free;
   If client.ResponseStatusCode <> 200 Then exit;
   dbString := DecodeStringBase64(db);
   result := TMemoryStream.Create;
@@ -216,7 +225,7 @@ Begin
   result := true;
 End;
 
-Function ReloadSettings(): Boolean;
+Function ReloadSettings: Boolean;
 Begin
   result := false;
   If Not LoggedIn Then exit;
@@ -227,6 +236,23 @@ Begin
   End;
   If client.ResponseStatusCode <> 200 Then exit;
   result := true;
+End;
+
+Function GetDBList(): TStringList;
+Var
+  dbList: String;
+Begin
+  result := Nil;
+  If Not LoggedIn Then exit;
+  Try
+    dbList := client.Get(BaseURL + '/getdblist');
+  Except
+    exit;
+  End;
+  If client.ResponseStatusCode <> 200 Then exit;
+  dbList := DecodeStringBase64(dbList);
+  result := TStringList.Create;
+  result.Text := dbList;
 End;
 
 End.
