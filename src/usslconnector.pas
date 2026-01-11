@@ -18,6 +18,8 @@ Function SendDB(Const db: TStream): Boolean;
 
 Function SetPassword(NewPassword: String): Boolean;
 
+Function ReloadSettings(): Boolean;
+
 Implementation
 
 Uses
@@ -210,6 +212,19 @@ Begin
     exit;
   End;
   m.free;
+  If client.ResponseStatusCode <> 200 Then exit;
+  result := true;
+End;
+
+Function ReloadSettings(): Boolean;
+Begin
+  result := false;
+  If Not LoggedIn Then exit;
+  Try
+    client.Post(BaseURL + '/reloadsettings');
+  Except
+    exit;
+  End;
   If client.ResponseStatusCode <> 200 Then exit;
   result := true;
 End;

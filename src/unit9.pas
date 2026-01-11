@@ -45,7 +45,7 @@ Implementation
 
 {$R *.lfm}
 
-Uses LCLType, usslconnector, ufilechecker;
+Uses LCLType, usslconnector, udirsync, ufilechecker, unit3;
 
 { TForm9 }
 
@@ -89,8 +89,49 @@ Begin
 End;
 
 Procedure TForm9.SpeedButton5Click(Sender: TObject);
+Var
+  m: TMemoryStream;
+  sl: TStringList;
+  LoadedDataBaseFiles: TFileList;
+  i: Integer;
+  d: TDataSet;
 Begin
   // Download
+  If Not assigned(RootFolders) Then Begin
+    showmessage('Error, you have to have at least one root folder defined.');
+    exit;
+  End;
+  StoreDataBase;
+  If Not Login(
+    IniFile.ReadString('Server', 'URL', 'https://127.0.0.1'),
+    IniFile.ReadString('Server', 'Port', '8443'),
+    IniFile.ReadString('Server', 'Username', ''),
+    IniFile.ReadString('Server', 'Password', '')
+    ) Then Begin
+    showmessage('Error, unable to log in, abort.');
+    Logout;
+    exit;
+  End;
+  m := DownloadDB();
+  If Not assigned(m) Then Begin
+    showmessage('Error, unable to download database.');
+    exit;
+  End;
+  sl := TStringList.Create;
+  sl.LoadFromStream(m);
+  m.free;
+  LoadedDataBaseFiles := Nil;
+  setlength(LoadedDataBaseFiles, sl.Count);
+  For i := 0 To sl.Count - 1 Do Begin
+    d := StringToDataSet(sl[i]);
+    LoadedDataBaseFiles[i].FileName := d.Filename;
+    LoadedDataBaseFiles[i].FileSize := d.Size;
+    LoadedDataBaseFiles[i].Root := RootFolders[0].RootFolder;
+  End;
+  sl.free;
+  form3.GenerateResultsWith(DataBaseFilesAsTFileList(Nil), LoadedDataBaseFiles);
+  form3.ShowModal;
+  ModalResult := mrOK
 End;
 
 End.

@@ -42,15 +42,15 @@ Type
     Procedure FormResize(Sender: TObject);
     Procedure SpeedButton1Click(Sender: TObject);
   private
-    fDataSet: TDataSets;
     MergedBuffers: TFileList;
     DataBaseFiles: TFileList;
     CopyList, Dellist: TFileList;
     RenameList: TRenameList;
     info: TReportInfos;
+    Procedure GenerateResults();
   public
     Procedure Init;
-
+    Procedure GenerateResultsWith(Const aDataBaseFiles, aMergedBuffers: TFileList);
   End;
 
 Var
@@ -138,73 +138,13 @@ Var
     End;
   End;
 
-  Procedure CreateDataBaseFiles();
-  Var
-    cnt, i, j: Integer;
-    Availables: TStringArray;
-    found: Boolean;
-  Begin
-    (*
-     * Nur die mit Aktiven "Roots" übernehmen
-     *)
-    Availables := Nil;
-    For i := 0 To CheckListBox1.Items.Count - 1 Do Begin
-      If CheckListBox1.Checked[i] Then Begin
-        setlength(Availables, high(Availables) + 2);
-        Availables[high(Availables)] := LowerCase(CheckListBox1.Items[i]);
-      End;
-    End;
-    DataBaseFiles := Nil;
-    setlength(DataBaseFiles, length(DataBase));
-    cnt := 0;
-    For i := 0 To high(DataBase) Do Begin
-      found := false;
-      For j := 0 To high(Availables) Do Begin
-        If Availables[j] = DataBase[i].lRootlabel Then Begin
-          found := true;
-          break;
-        End;
-      End;
-      If found Then Begin
-        DataBaseFiles[cnt].FileName := DataBase[i].Root + DataBase[i].Filename;
-        DataBaseFiles[cnt].FileSize := DataBase[i].Size;
-        DataBaseFiles[cnt].Root := DataBase[i].Root;
-        inc(cnt);
-      End;
-    End;
-    setlength(DataBaseFiles, cnt);
-  End;
-
-  Procedure CleanFromRoots(Var alist: TFileList);
-  Var
-    i: Integer;
-  Begin
-    For i := 0 To high(alist) Do Begin
-      delete(alist[i].FileName, 1, length(alist[i].Root))
-    End;
-  End;
-
-  Procedure CleanFromRoots(Var alist: TRenameList);
-  Var
-    i: Integer;
-  Begin
-    For i := 0 To high(alist) Do Begin
-      delete(alist[i].SourceFile, 1, length(alist[i].SourceRoot));
-      delete(alist[i].DestFile, 1, length(alist[i].DestRoot));
-    End;
-  End;
 
 Var
   found, i: Integer;
-
+  Roots: TStringArray;
 Begin
   MergedBuffers := Nil;
   Buffer := Nil;
-  fDataSet := Nil;
-  RenameList := Nil;
-  CopyList := Nil;
-  Dellist := Nil;
-
   // TODO: Prüfen ob es PendingJobs gibt, welche als Target ein gewähltes Root folder haben
   //       \-> Wenn Ja, abfragen ob vorher diese Jobs abgearbeitet werden sollen ..
 
@@ -224,29 +164,15 @@ Begin
     ShowMessage('Nothing found, skip now.');
     exit;
   End;
-  CreateDataBaseFiles();
-  udirsync.SortFileList(MergedBuffers);
-  udirsync.SortFileList(DataBaseFiles);
-  GenerateJobLists('', '', MergedBuffers, DataBaseFiles, RenameList, CopyList, Dellist, false);
-  // Die Roots müssen nun wieder "raus"
-  CleanFromRoots(CopyList);
-  CleanFromRoots(Dellist);
-  CleanFromRoots(RenameList);
-  info.CopyInfo := FileSizeToString(FileListToSize(CopyList));
-  info.DelInfo := FileSizeToString(FileListToSize(DelList));
-  info.RenameInfo := FileSizeToString(RenameFileListToSize(RenameList));
-  Label1.Caption := Label1.Caption + format(
-    LineEnding +
-    '%d files of size %s need to be renamed' + LineEnding +
-    '%d files of size %s need to be added' + LineEnding +
-    '%d files of size %s need to be deleted' + LineEnding +
-    '%d files are already in sync' + LineEnding
-    , [
-    length(RenameList), FileSizeToString(RenameFileListToSize(RenameList))
-      , length(CopyList), FileSizeToString(FileListToSize(CopyList))
-      , length(DelList), FileSizeToString(FileListToSize(DelList))
-      , (length(MergedBuffers) - (length(CopyList) + length(RenameList)))
-      ]);
+  Roots := Nil;
+  For i := 0 To CheckListBox1.Items.Count - 1 Do Begin
+    If CheckListBox1.Checked[i] Then Begin
+      setlength(Roots, high(Roots) + 2);
+      Roots[high(Roots)] := CheckListBox1.Items[i];
+    End;
+  End;
+  DataBaseFiles := DataBaseFilesAsTFileList(Roots);
+  GenerateResults();
 End;
 
 Procedure TForm3.Button2Click(Sender: TObject);
@@ -323,7 +249,7 @@ Var
   i: Integer;
 Begin
   MergedBuffers := Nil;
-  fDataSet := Nil;
+  //  fDataSet := Nil;
   RenameList := Nil;
   CopyList := Nil;
   Dellist := Nil;
@@ -336,6 +262,63 @@ Begin
     CheckListBox1.Checked[i] := DirectoryExists(RootFolders[i].RootFolder);
   End;
   Label1.Caption := '';
+End;
+
+Procedure TForm3.GenerateResultsWith(Const aDataBaseFiles,
+  aMergedBuffers: TFileList);
+Begin
+  DataBaseFiles := aDataBaseFiles;
+  MergedBuffers := aMergedBuffers;
+  GenerateResults();
+End;
+
+Procedure TForm3.GenerateResults;
+
+  Procedure CleanFromRoots(Var alist: TFileList);
+  Var
+    i: Integer;
+  Begin
+    For i := 0 To high(alist) Do Begin
+      delete(alist[i].FileName, 1, length(alist[i].Root))
+    End;
+  End;
+
+  Procedure CleanFromRoots(Var alist: TRenameList);
+  Var
+    i: Integer;
+  Begin
+    For i := 0 To high(alist) Do Begin
+      delete(alist[i].SourceFile, 1, length(alist[i].SourceRoot));
+      delete(alist[i].DestFile, 1, length(alist[i].DestRoot));
+    End;
+  End;
+Begin
+  RenameList := Nil;
+  CopyList := Nil;
+  Dellist := Nil;
+  udirsync.SortFileList(MergedBuffers);
+  udirsync.SortFileList(DataBaseFiles);
+  GenerateJobLists('', '', MergedBuffers, DataBaseFiles, RenameList, CopyList, Dellist, false);
+  // Die Roots müssen nun wieder "raus"
+  CleanFromRoots(CopyList);
+  CleanFromRoots(Dellist);
+  CleanFromRoots(RenameList);
+  info.CopyInfo := FileSizeToString(FileListToSize(CopyList));
+  info.DelInfo := FileSizeToString(FileListToSize(DelList));
+  info.RenameInfo := FileSizeToString(RenameFileListToSize(RenameList));
+  Label1.Caption := Label1.Caption + format(
+    LineEnding +
+    '%d files of size %s need to be renamed' + LineEnding +
+    '%d files of size %s need to be added' + LineEnding +
+    '%d files of size %s need to be deleted' + LineEnding +
+    '%d files are already in sync' + LineEnding
+    , [
+    length(RenameList), FileSizeToString(RenameFileListToSize(RenameList))
+      , length(CopyList), FileSizeToString(FileListToSize(CopyList))
+      , length(DelList), FileSizeToString(FileListToSize(DelList))
+      , (length(MergedBuffers) - (length(CopyList) + length(RenameList)))
+      ]);
+
 End;
 
 End.

@@ -147,6 +147,13 @@ Function ExecuteJob(Const aJob: TJob): Boolean;
 
 Function JobDetailToString(aDetail: TJobDetail): String;
 
+(*
+ * Gibt die Datenbang als TFileList zurück
+ *)
+Function DataBaseFilesAsTFileList(Const AvailableRoots: TStringArray = Nil): TFileList;
+
+Function StringToDataSet(Const aDataSet: String): TDataSet;
+
 Implementation
 
 Uses ucopycomandercontroller;
@@ -685,6 +692,42 @@ Begin
         result := true;
       End;
   End;
+End;
+
+Function DataBaseFilesAsTFileList(Const AvailableRoots: TStringArray
+  ): TFileList;
+Var
+  cnt, i, j: Integer;
+  Availables: TStringArray;
+  found: Boolean;
+Begin
+  (*
+   * Nur die mit Aktiven "Roots" übernehmen
+   *)
+  result := Nil;
+  Availables := Nil;
+  setlength(Availables, length(AvailableRoots));
+  For i := 0 To high(AvailableRoots) Do Begin
+    Availables[i] := LowerCase(AvailableRoots[i]);
+  End;
+  setlength(result, length(DataBase));
+  cnt := 0;
+  For i := 0 To high(DataBase) Do Begin
+    found := Not assigned(Availables);
+    For j := 0 To high(Availables) Do Begin
+      If Availables[j] = DataBase[i].lRootlabel Then Begin
+        found := true;
+        break;
+      End;
+    End;
+    If found Then Begin
+      result[cnt].FileName := DataBase[i].Root + DataBase[i].Filename;
+      result[cnt].FileSize := DataBase[i].Size;
+      result[cnt].Root := DataBase[i].Root;
+      inc(cnt);
+    End;
+  End;
+  setlength(result, cnt);
 End;
 
 End.
