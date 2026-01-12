@@ -380,7 +380,7 @@ Procedure LoadDataBase;
 Var
   sl: TStringList;
   fn: String;
-  i: Integer;
+  i, cnt: Integer;
 Begin
   // DataBase
   fn := IncludeTrailingPathDelimiter(GetAppConfigDir(false)) + 'database.db';
@@ -388,12 +388,23 @@ Begin
   sl := TStringList.Create;
   sl.LoadFromFile(fn);
   setlength(DataBase, sl.Count);
+  cnt := 0;
   For i := 0 To sl.Count - 1 Do Begin
-    DataBase[i] := StringToDataSet(sl[i]);
-    RefreshDynamicContent(i);
+    DataBase[cnt] := StringToDataSet(sl[i]);
+    If trim(DataBase[cnt].Root) <> '' Then Begin
+      RefreshDynamicContent(cnt);
+      inc(cnt);
+    End;
   End;
   sl.free;
-  DBChanged := false;
+  If length(DataBase) <> cnt Then Begin
+    // Eine Beschädigte DB wurde wieder her gestellt ..
+    setlength(DataBase, cnt);
+    DBChanged := true;
+  End
+  Else Begin
+    DBChanged := false;
+  End;
 End;
 
 Procedure StoreDataBase;

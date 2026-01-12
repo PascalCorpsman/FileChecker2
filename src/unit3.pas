@@ -311,10 +311,8 @@ Var
   i: Integer;
 Begin
   For i := 0 To high(alist) Do Begin
-    If alist[i].Root <> '' Then Begin
+    If (alist[i].Root <> '') And (pos(alist[i].Root, alist[i].FileName) = 1) Then Begin
       delete(alist[i].FileName, 1, length(alist[i].Root));
-      // Verhindert "fehler" bei mehrfach aufrufen von CleanFromRoots
-      alist[i].Root := '';
     End;
   End;
 End;
@@ -324,15 +322,11 @@ Var
   i: Integer;
 Begin
   For i := 0 To high(alist) Do Begin
-    If alist[i].SourceRoot <> '' Then Begin
+    If (alist[i].SourceRoot <> '') And (pos(alist[i].SourceRoot, alist[i].SourceFile) = 1) Then Begin
       delete(alist[i].SourceFile, 1, length(alist[i].SourceRoot));
-      // Verhindert "fehler" bei mehrfach aufrufen von CleanFromRoots
-      alist[i].SourceRoot := '';
     End;
-    If alist[i].DestRoot <> '' Then Begin
+    If (alist[i].DestRoot <> '') And (pos(alist[i].DestRoot, alist[i].DestFile) = 1) Then Begin
       delete(alist[i].DestFile, 1, length(alist[i].DestRoot));
-      // Verhindert "fehler" bei mehrfach aufrufen von CleanFromRoots
-      alist[i].DestRoot := '';
     End;
   End;
 End;
