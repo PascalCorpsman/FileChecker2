@@ -60,32 +60,29 @@ Var
   fn: String;
 Begin
   // Upload
-  If Application.MessageBox('There are no further checks did you merge and download the database before ?', 'Warning', MB_ICONQUESTION Or MB_YESNO) = ID_YES Then Begin
-    // Sicherstellen, dass die Datenbank auch gespeichert ist.
-    StoreDataBase;
-    If Not Login(
-      IniFile.ReadString('Server', 'URL', 'https://127.0.0.1'),
-      IniFile.ReadString('Server', 'Port', '8443'),
-      IniFile.ReadString('Server', 'Username', ''),
-      IniFile.ReadString('Server', 'Password', '')
-      ) Then Begin
-      showmessage('Error, unable to log in, abort.');
-      Logout;
-      exit;
-    End;
-    m := TMemoryStream.Create;
-    fn := IncludeTrailingPathDelimiter(GetAppConfigDir(false)) + 'database.db';
-    m.LoadFromFile(fn);
-    m.Position := 0;
-    If SendDB(m) Then Begin
-      showmessage('Successfully uploaded database.');
-    End
-    Else Begin
-      showmessage('Failed to upload database.');
-    End;
-    m.free;
+  StoreDataBase; // Sicherstellen, dass die Datenbank auch gespeichert ist.
+  If Not Login(
+    IniFile.ReadString('Server', 'URL', 'https://127.0.0.1'),
+    IniFile.ReadString('Server', 'Port', '8443'),
+    IniFile.ReadString('Server', 'Username', ''),
+    IniFile.ReadString('Server', 'Password', '')
+    ) Then Begin
+    showmessage('Error, unable to log in, abort.');
     Logout;
+    exit;
   End;
+  m := TMemoryStream.Create;
+  fn := IncludeTrailingPathDelimiter(GetAppConfigDir(false)) + 'database.db';
+  m.LoadFromFile(fn);
+  m.Position := 0;
+  If SendDB(m) Then Begin
+    showmessage('Successfully uploaded database.');
+  End
+  Else Begin
+    showmessage('Failed to upload database.');
+  End;
+  m.free;
+  Logout;
 End;
 
 Procedure TForm9.SpeedButton5Click(Sender: TObject);
@@ -100,6 +97,11 @@ Begin
   If Not assigned(RootFolders) Then Begin
     showmessage('Error, you have to have at least one root folder defined.');
     exit;
+  End;
+  If PendingJobs <> Nil Then Begin
+    If ID_NO = application.MessageBox('Downloading and syncing will create false positives if there are unfinished jobs, press no if you want to abort.', 'Warning', MB_YESNO Or MB_ICONWARNING) Then Begin
+      exit;
+    End;
   End;
   StoreDataBase;
   If Not Login(

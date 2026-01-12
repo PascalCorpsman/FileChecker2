@@ -97,31 +97,35 @@ End;
 
 Procedure TForm4.Button3Click(Sender: TObject);
 Var
-  i: Integer;
+  i, removerscnt: Integer;
   s: String;
+  removers: TIntegers;
 Begin
   // Do it
+  removers := Nil;
+  setlength(removers, CheckListBox1.Items.Count);
+  removerscnt := 0;
   CheckListBox1.Items.BeginUpdate;
   For i := 0 To CheckListBox1.Items.Count - 1 Do Begin
     If CheckListBox1.Checked[i] Then Begin
+      removers[removerscnt] := i;
+      inc(removerscnt);
       If CheckBox1.Checked Then Begin
         s := ExtractFilePath(DataBase[fFiles[i]].Filename);
       End
       Else Begin
         s := Edit1.text;
       End;
-      // Fix Pathdelims für das jeweilige OS..
-{$IFDEF Linux}
-      s := StringReplace(s, '\', PathDelim, [rfReplaceAll]);
-{$ENDIF}
-{$IFDEF Windows}
-      s := StringReplace(s, '/', PathDelim, [rfReplaceAll]);
-{$ENDIF}
+      s := FixPathDelims(s);
       If s <> '' Then s := IncludeTrailingPathDelimiter(s);
       s := s + ExtractFileName(DataBase[fFiles[i]].Filename);
       TryDoMove(fFiles[i], RootFolders[ComboBox2.ItemIndex].RootFolder, s);
       CheckListBox1.Checked[i] := false;
     End;
+  End;
+  // Wir löschen die bereits "erledigten" aus der Checklist heraus, die gibt es nun ja nicht mehr
+  For i := removerscnt - 1 Downto 0 Do Begin
+    CheckListBox1.Items.Delete(removers[i]);
   End;
   CheckListBox1.Items.EndUpdate;
 End;
@@ -164,7 +168,10 @@ End;
 Procedure TForm4.Edit1KeyDown(Sender: TObject; Var Key: Word; Shift: TShiftState
   );
 Begin
-  If key = VK_RETURN Then Button3.Click;
+  If key = VK_RETURN Then Begin
+    Button3.Click;
+    key := 0;
+  End;
 End;
 
 Procedure TForm4.StringGrid1SelectCell(Sender: TObject; aCol, aRow: Integer;
