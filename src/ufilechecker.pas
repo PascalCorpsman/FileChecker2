@@ -155,6 +155,9 @@ Function StringToDataSet(Const aDataSet: String): TDataSet;
 
 Function FixPathDelims(aFileFolder: String): String;
 
+Procedure RevertJob(Const aJob: TJob);
+Function JobisRevertable(Const aJob: TJob): boolean;
+
 Implementation
 
 Uses ucopycomandercontroller;
@@ -374,6 +377,20 @@ Begin
 {$IFDEF Linux}
   result := StringReplace(result, '\', PathDelim, [rfReplaceAll]);
 {$ENDIF}
+End;
+
+Procedure RevertJob(Const aJob: TJob);
+Begin
+  // Todo: Implementieren
+//  Case aJob.Job Of
+
+//  End;
+End;
+
+Function JobisRevertable(Const aJob: TJob): boolean;
+Begin
+  result := false;
+  // Todo: implementieren
 End;
 
 Procedure LoadDataBase;

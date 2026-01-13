@@ -37,6 +37,7 @@ Type
     Procedure FormCreate(Sender: TObject);
   private
     fJobs: Array Of TGroupBox;
+    fJobCancelButtons: Array Of TButton;
 
     Procedure OnCancelButtonClick(Sender: TObject);
     Procedure AddJob(Const aJob: TJob);
@@ -65,12 +66,41 @@ End;
 
 Procedure TForm7.OnCancelButtonClick(Sender: TObject);
 Var
-  index: Integer;
+  index, i, t: Integer;
+  jb: TJob;
 Begin
-  showmessage('Not implemented yet.');
-  // 1. Check ob der Job Rückgängig gemacht werden kann
   index := TButton(sender).Tag;
+  jb := PendingJobs[index];
+  If Not JobisRevertable(jb) Then Begin
+    showmessage('Error, job atm not revertable.');
+    exit;
+  End;
+  showmessage('Not implemented yet.');
+  //  exit;
+    // 1. Check ob der Job Rückgängig gemacht werden kann
+  // Todo: den Pending Job Index Löschen und das Pending Job Array nachführen
+  For i := index To high(PendingJobs) - 1 Do Begin
+    PendingJobs[i] := PendingJobs[i + 1];
+  End;
+  setlength(PendingJobs, high(PendingJobs));
+  fJobs[index].free; // Die LCL des Jobs Löschen
+  // Alle Button Tags und die Groupboxen die danach kommen nach führen
+  t := 8;
+  For i := 0 To index - 1 Do Begin
+    t := t + fJobs[i].Height + 8;
+  End;
+  For i := index To high(fJobs) - 1 Do Begin
+    fJobs[i] := fJobs[i + 1];
+    fJobs[i].Top := t;
+    t := t + fJobs[i].Height + 8;
 
+    fJobCancelButtons[i] := fJobCancelButtons[i + 1];
+    fJobCancelButtons[i].Tag := i;
+  End;
+  setlength(fJobCancelButtons, high(fJobCancelButtons));
+  setlength(fJobs, high(fJobs));
+  // Die Ganze Gui ist angepasst und Pending Jobs, nun "reverten" wir den Job Tatsächlich
+  RevertJob(jb);
 End;
 
 Procedure TForm7.AddJob(Const aJob: TJob);
@@ -86,6 +116,7 @@ Begin
     t := t + fJobs[i].Height + 8;
   End;
 
+  setlength(fJobCancelButtons, high(fJobCancelButtons) + 2);
   setlength(fJobs, high(fJobs) + 2);
   index := high(fJobs);
 
@@ -139,6 +170,7 @@ Begin
         b.Caption := 'Cancel';
         b.OnClick := @OnCancelButtonClick;
         b.Anchors := [akTop, akRight];
+        fJobCancelButtons[high(fJobCancelButtons)] := b;
       End;
     //    jDelete: Begin
     //
@@ -158,6 +190,7 @@ Begin
   For i := 0 To high(fJobs) Do Begin
     fJobs[i].free;
   End;
+  setlength(fJobCancelButtons, 0);
   setlength(fJobs, 0);
   For i := 0 To high(PendingJobs) Do Begin
     AddJob(PendingJobs[i]);
