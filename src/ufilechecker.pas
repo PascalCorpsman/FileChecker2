@@ -155,8 +155,7 @@ Function StringToDataSet(Const aDataSet: String): TDataSet;
 
 Function FixPathDelims(aFileFolder: String): String;
 
-Procedure RevertJob(Const aJob: TJob);
-Function JobisRevertable(Const aJob: TJob): boolean;
+Function RevertJob(Const aJob: TJob): boolean;
 
 Implementation
 
@@ -379,18 +378,32 @@ Begin
 {$ENDIF}
 End;
 
-Procedure RevertJob(Const aJob: TJob);
-Begin
-  // Todo: Implementieren
-//  Case aJob.Job Of
-
-//  End;
-End;
-
-Function JobisRevertable(Const aJob: TJob): boolean;
+Function RevertJob(Const aJob: TJob): boolean;
+Var
+  sourceFile, sourcefolder: String;
+  index: Integer;
 Begin
   result := false;
-  // Todo: implementieren
+  Case aJob.Job Of
+    jMove: Begin
+        // Physikalisches Verschieben der Datei
+        If Not FileExists(ajob.RealSourceFile) Then exit;
+        sourceFile := aJob.SourceRoot + aJob.SourceFile;
+        sourcefolder := ExtractFileDir(sourceFile);
+        If Not ForceDirectories(sourcefolder) Then exit;
+        If Not RenameFile(ajob.RealSourceFile, sourceFile) Then exit;
+        result := true;
+        // Umtragen in der Datenbank
+        index := GetIndexOf(aJob.TargetRoot, aJob.TargetFilename);
+        If index = -1 Then exit;
+        DataBase[index].Filename := aJob.SourceFile;
+        DataBase[index].Root := aJob.SourceRoot;
+        RefreshDynamicContent(index);
+      End;
+  Else Begin
+      Raise exception.Create('RevertJob, not implemented for: ' + JobDetailToString(ajob.Job));
+    End;
+  End;
 End;
 
 Procedure LoadDataBase;

@@ -71,20 +71,17 @@ Var
 Begin
   index := TButton(sender).Tag;
   jb := PendingJobs[index];
-  If Not JobisRevertable(jb) Then Begin
-    showmessage('Error, job atm not revertable.');
+  If Not RevertJob(jb) Then Begin
+    showmessage('Error, was not able to revert job, can not delete it.');
     exit;
   End;
-  showmessage('Not implemented yet.');
-  //  exit;
-    // 1. Check ob der Job Rückgängig gemacht werden kann
-  // Todo: den Pending Job Index Löschen und das Pending Job Array nachführen
+  // den Pending Job Index Löschen und das Pending Job Array nachführen
   For i := index To high(PendingJobs) - 1 Do Begin
     PendingJobs[i] := PendingJobs[i + 1];
   End;
   setlength(PendingJobs, high(PendingJobs));
   fJobs[index].free; // Die LCL des Jobs Löschen
-  // Alle Button Tags und die Groupboxen die danach kommen nach führen
+  // Alle Button Tags und die Groupboxen die danach kommen, nach führen
   t := 8;
   For i := 0 To index - 1 Do Begin
     t := t + fJobs[i].Height + 8;
@@ -99,8 +96,6 @@ Begin
   End;
   setlength(fJobCancelButtons, high(fJobCancelButtons));
   setlength(fJobs, high(fJobs));
-  // Die Ganze Gui ist angepasst und Pending Jobs, nun "reverten" wir den Job Tatsächlich
-  RevertJob(jb);
 End;
 
 Procedure TForm7.AddJob(Const aJob: TJob);

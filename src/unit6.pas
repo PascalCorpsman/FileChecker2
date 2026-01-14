@@ -79,6 +79,7 @@ Begin
   // Show Jobs
   form7.init;
   form7.ShowModal;
+  init;
 End;
 
 Procedure TForm6.Button3Click(Sender: TObject);
@@ -150,6 +151,7 @@ Begin
   Else Begin
     showmessage(format('Done, was able to finish: %d Jobs', [cnt]));
   End;
+  Init;
   button1.Enabled := true;
 End;
 
