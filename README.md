@@ -13,5 +13,8 @@ To be able to compile the code you need the [Lazarus-IDE](https://www.lazarus-id
 
 Inside Lazarus you need to install the following packages:
 - L-Net from [almindor](https://github.com/almindor/lnet) or [PascalCorpsman](https://github.com/PascalCorpsman/lnet) use the online Packagemanager to install (recomended to use the PascalCorpsman version)
+- DCPcrypt, use the online Packagemanager to install
 
+### Fileserver
 
+Optional the filechecker supports upload / download / merge databases with a remote server. In order to do so, you also need to compile and setup the [server](src/server)
