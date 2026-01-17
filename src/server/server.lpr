@@ -57,6 +57,11 @@ Var
   ServerPort: integer;
   CertificateFileName, PrivateKeyFileName: String;
 
+Procedure Log(value: String);
+Begin
+  writeln(FormatDateTime('YYYY.MM.DD HH:MM:SS ', now) + value);
+End;
+
 Procedure LoadSettings;
 Var
   ini: TIniFile;
@@ -73,7 +78,7 @@ Begin
     users[i].Password := ini.ReadString('User', 'PW' + inttostr(i), '');
     users[i].Rights := ini.ReadInteger('User', 'Rights' + inttostr(i), 0);
     fillchar(users[i].LastChallenge[0], sizeof(users[i].LastChallenge[0]), 0);
-    writeln('  adduser: ' + users[i].Username);
+    Log('  adduser: ' + users[i].Username);
   End;
   ini.free;
 End;
@@ -174,7 +179,7 @@ Begin
     End;
   End;
   If (DatabaseFileName <> '') And (FileExists(DatabaseFileName)) Then Begin
-    writeln('Send ' + DatabaseFileName + ' to ' + Users[UserIndex].Username);
+    Log('Send ' + DatabaseFileName + ' to ' + Users[UserIndex].Username);
     Filestream := TFileStream.Create(DatabaseFileName, fmOpenRead Or fmShareDenyWrite);
     RawBody := '';
     Try
@@ -190,7 +195,7 @@ Begin
     aResponse.SendContent;
   End
   Else Begin
-    writeln('No db present, send 404');
+    Log('No db present, send 404');
     SendEmptyResponce(aResponse, 404);
   End;
 End;
@@ -211,7 +216,7 @@ Begin
     End;
   End;
   EncodedBody := EncodeStringBase64(sl.text);
-  writeln(Users[i].Username + ' requested DB list, found ' + IntToStr(sl.count));
+  Log(Users[i].Username + ' requested DB list, found ' + IntToStr(sl.count));
   sl.free;
   aResponse.Code := 200;
   aResponse.ContentLength := EncodedBody.Length;
@@ -231,7 +236,7 @@ Begin
     SendEmptyResponce(aResponse, 403);
     Exit;
   End;
-  writeln(Users[UserIndex].Username + ' triggert reload settings.');
+  Log(Users[UserIndex].Username + ' triggert reload settings.');
   LoadSettings;
   SendEmptyResponce(aResponse, 200);
 End;
@@ -260,7 +265,7 @@ Begin
     Filestream := TFileStream.Create('db' + Users[UserIndex].Username + '.db', fmCreate Or fmOpenWrite);
     Filestream.Write(dbString[1], length(dbString));
     Filestream.free;
-    writeln('Received db from ' + Users[UserIndex].Username);
+    Log('Received db from ' + Users[UserIndex].Username);
   Except
     SendEmptyResponce(aResponse, 500);
     Exit;
@@ -278,7 +283,7 @@ Begin
   UserIndex := UserExistsAndIsAllowed(aRequest, aResponse);
   If UserIndex = -1 Then exit;
   NewPW := DecodeStringBase64(aRequest.Content);
-  writeln('Set new password for: ' + Users[UserIndex].Username);
+  Log('Set new password for: ' + Users[UserIndex].Username);
   // Sofort übernehmen
   Users[UserIndex].Password := NewPW;
   // Und für den Reboot ;)
@@ -316,7 +321,7 @@ Begin
   m.Read(RawBody[1], m.Size);
   m.free;
   EncodedBody := EncodeStringBase64(RawBody);
-  writeln(Users[UserIndex].Username + ' requested userlist');
+  Log(Users[UserIndex].Username + ' requested userlist');
   aResponse.Code := 200;
   aResponse.ContentLength := EncodedBody.Length;
   aResponse.Content := EncodedBody;
@@ -349,7 +354,7 @@ Begin
   UserRight := strtointdef(sa[1], 0);
   For i := 0 To high(Users) Do Begin
     If Users[i].Username = Username Then Begin
-      writeln('Set new rights for: ' + Username);
+      Log('Set new rights for: ' + Username);
       // Sofort übernehmen
       Users[i].Rights := UserRight;
       // Und für den Reboot ;)
@@ -395,7 +400,7 @@ Begin
       End;
       ini.WriteInteger('User', 'Count', length(Users));
       ini.free;
-      writeln('Del user: ' + Username);
+      Log('Del user: ' + Username);
       SendEmptyResponce(aResponse, 200);
       exit;
     End;
@@ -444,7 +449,7 @@ Begin
   ini.WriteInteger('User', 'Rights' + inttostr(High(Users)), users[high(Users)].Rights);
   ini.WriteInteger('User', 'Count', length(Users));
   ini.free;
-  writeln('  adduser: ' + Username);
+  Log('  adduser: ' + Username);
   SendEmptyResponce(aResponse, 200);
 End;
 
@@ -462,7 +467,7 @@ Begin
     exit;
   End;
   Username := DecodeStringBase64(Username);
-  writeln('Got a challenge request from user: ' + Username);
+  Log('Got a challenge request from user: ' + Username);
   // Prüfen ob es den User bei uns überhaupt gibt, ..
   UserIndex := GetUserIndex(Username);
   If UserIndex = -1 Then Begin
@@ -477,7 +482,7 @@ Begin
     Users[UserIndex].LastChallenge[i] := ord(seed[i + 1]);
   End;
 {$IFDEF Debug}
-  writeln('Send challenge:');
+  Log('Send challenge:');
   For i := 1 To length(seed) Do Begin
     write(format(' %0.2X', [ord(seed[i])]));
   End;
@@ -503,7 +508,7 @@ Begin
     exit;
   End;
   Username := DecodeStringBase64(Username);
-  writeln('Got a challenge responce from user: ' + Username);
+  Log('Got a challenge responce from user: ' + Username);
   UserIndex := GetUserIndex(Username);
   If UserIndex = -1 Then Begin
     SendEmptyResponce(aResponse, 401);
@@ -550,9 +555,9 @@ Begin
     Token[i + 1] := chr(random(256));
   End;
   Users[UserIndex].TokenCreationTime := now;
-  writeln(Username + ' logged in');
+  Log(Username + ' logged in');
 {$IFDEF Debug}
-  writeln('Send token:');
+  Log('Send token:');
   For i := 1 To length(Token) Do Begin
     write(format(' %0.2X', [ord(Token[i])]));
   End;
@@ -573,7 +578,7 @@ Begin
    *          0.03 - setDB hatte falsche Dateinamen abgelegt.
    *          0.04 - remote user management
    *)
-  Writeln('Filechecker server ver. 0.04');
+  Log('Filechecker server ver. 0.04');
   Randomize;
   LoadSettings;
   Application.Initialize;
@@ -592,15 +597,15 @@ Begin
   Application.UseSSL := true;
   Application.CertificateData.Certificate.FileName := CertificateFileName;
   Application.CertificateData.PrivateKey.FileName := PrivateKeyFileName;
-  Writeln('  is running on port: ' + inttostr(ServerPort));
+  Log('  is running on port: ' + inttostr(ServerPort));
   Try
     Application.Run;
   Except
     On av: Exception Do Begin
-      writeln(av.Message);
+      Log('Fatal: ' + av.Message);
     End;
   End;
-  Writeln('  stopped.');
+  Log('  stopped.');
   Application.free;
 End.
 
