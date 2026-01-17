@@ -160,7 +160,7 @@ Begin
   If Login(Edit6.text, edit7.text, edit10.text, OldPW) Then Begin
     If SetPassword(NewPW) Then Begin
       edit9.text := NewPW;
-      showmessage('Login succeed.');
+      showmessage('Password change succeed.');
     End
     Else Begin
       showmessage('Failed to set new password.');

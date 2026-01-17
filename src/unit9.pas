@@ -118,11 +118,13 @@ Begin
   If Not assigned(sl) Then Begin
     showmessage('Error, unable to load database list.');
     Logout;
+    sl.free;
     exit;
   End;
   If sl.Count = 0 Then Begin
     showmessage('Error, no databases on the server available.');
     Logout;
+    sl.free;
     exit;
   End;
   form10.InitWith(sl);

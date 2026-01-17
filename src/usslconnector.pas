@@ -20,6 +20,10 @@ Function SetPassword(NewPassword: String): Boolean;
 
 Function ReloadSettings(): Boolean;
 Function GetDBList(): TStringList;
+Function GetUserList(): TStringList;
+Function SetUserRights(UserName: String; Rights: Integer): Boolean;
+Function delUser(Username: String): Boolean;
+Function addUser(Username, Password: String; Rights: integer): Boolean;
 
 Implementation
 
@@ -166,10 +170,12 @@ Begin
     client.RequestBody := m;
     db := client.Get(BaseURL + '/getdb');
   Except
+    client.RequestBody := Nil;
     m.free;
     exit;
   End;
   m.free;
+  client.RequestBody := Nil;
   If client.ResponseStatusCode <> 200 Then exit;
   dbString := DecodeStringBase64(db);
   result := TMemoryStream.Create;
@@ -195,10 +201,12 @@ Begin
     Client.RequestBody := m;
     client.Post(BaseURL + '/setdb');
   Except
+    client.RequestBody := Nil;
     m.free;
     exit;
   End;
   m.free;
+  client.RequestBody := Nil;
   If client.ResponseStatusCode <> 200 Then exit;
   result := true;
 End;
@@ -217,10 +225,12 @@ Begin
     Client.RequestBody := m;
     client.Post(BaseURL + '/setpassword');
   Except
+    client.RequestBody := Nil;
     m.free;
     exit;
   End;
   m.free;
+  client.RequestBody := Nil;
   If client.ResponseStatusCode <> 200 Then exit;
   result := true;
 End;
@@ -253,6 +263,98 @@ Begin
   dbList := DecodeStringBase64(dbList);
   result := TStringList.Create;
   result.Text := dbList;
+End;
+
+Function GetUserList(): TStringList;
+Var
+  dbList: String;
+Begin
+  result := Nil;
+  If Not LoggedIn Then exit;
+  Try
+    dbList := client.Get(BaseURL + '/getuserlist');
+  Except
+    exit;
+  End;
+  If client.ResponseStatusCode <> 200 Then exit;
+  dbList := DecodeStringBase64(dbList);
+  result := TStringList.Create;
+  result.Text := dbList;
+End;
+
+Function SetUserRights(UserName: String; Rights: Integer): Boolean;
+Var
+  m: TMemoryStream;
+  content: String;
+Begin
+  result := false;
+  If Not LoggedIn Then exit;
+  content := EncodeStringBase64(format('%s;%d', [UserName, Rights]));
+  m := TMemoryStream.Create;
+  m.Write(content[1], length(content));
+  m.Position := 0;
+  Try
+    Client.RequestBody := m;
+    client.Post(BaseURL + '/setuserright');
+  Except
+    Client.RequestBody := Nil;
+    m.free;
+    exit;
+  End;
+  m.free;
+  Client.RequestBody := Nil;
+  If client.ResponseStatusCode <> 200 Then exit;
+  result := true;
+End;
+
+Function delUser(Username: String): Boolean;
+Var
+  m: TMemoryStream;
+  content: String;
+Begin
+  result := false;
+  If Not LoggedIn Then exit;
+  content := EncodeStringBase64(Username);
+  m := TMemoryStream.Create;
+  m.Write(content[1], length(content));
+  m.Position := 0;
+  Try
+    Client.RequestBody := m;
+    client.Post(BaseURL + '/deluser');
+  Except
+    Client.RequestBody := Nil;
+    m.free;
+    exit;
+  End;
+  m.free;
+  Client.RequestBody := Nil;
+  If client.ResponseStatusCode <> 200 Then exit;
+  result := true;
+End;
+
+Function addUser(Username, Password: String; Rights: integer): Boolean;
+Var
+  m: TMemoryStream;
+  content: String;
+Begin
+  result := false;
+  If Not LoggedIn Then exit;
+  content := EncodeStringBase64(format('%d;%s;%s', [Rights, Username, Password]));
+  m := TMemoryStream.Create;
+  m.Write(content[1], length(content));
+  m.Position := 0;
+  Try
+    Client.RequestBody := m;
+    client.Post(BaseURL + '/adduser');
+  Except
+    Client.RequestBody := Nil;
+    m.free;
+    exit;
+  End;
+  m.free;
+  Client.RequestBody := Nil;
+  If client.ResponseStatusCode <> 200 Then exit;
+  result := true;
 End;
 
 End.
