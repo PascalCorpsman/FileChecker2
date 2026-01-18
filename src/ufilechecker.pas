@@ -95,6 +95,7 @@ Var
   DataBase: TDataSets = Nil; // !! ACHTUNG !! Database muss immer sortiert sein, also nach jeder Änderung SortFileList !
   Selected: TIntegers = Nil; //
   SelectedCnt: Integer = 0;
+  SelectedFileSize: Int64 = 0;
   PendingJobs: Array Of TJob = Nil;
   DBChanged: Boolean = false;
 

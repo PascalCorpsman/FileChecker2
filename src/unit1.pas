@@ -133,10 +133,11 @@ Uses LCLType, math, lclintf
 Const
   // see TForm1.StatusBar1Hint for more details ;)
   PanelIndexDataSetInfo = 0;
-  PanelIndexPendingJobInfo = 1;
-  PanelIndexRootsInfo = 2;
-  PanelIndexSearchResultInfo = 3;
-  PenelIndexOpenTmpFolder = 4;
+  PanelIndexSumFileSize = 1;
+  PanelIndexPendingJobInfo = 2;
+  PanelIndexRootsInfo = 3;
+  PanelIndexSearchResultInfo = 4;
+  PanelIndexOpenTmpFolder = 5;
 
   ImageIndexOptions = 0;
   ImageIndexSearch = 1;
@@ -154,10 +155,15 @@ Const
   ImageIndexRainbow = 13;
   ImageIndexFiles = 14;
   ImageIndexFolder = 15;
+  ImageIndexServerUpload = 16;
+  ImageIndexServerDownload = 17;
+  ImageIndexFileSum = 18;
 
   { TForm1 }
 
 Procedure TForm1.FormCreate(Sender: TObject);
+Var
+  i: Integer;
 Begin
   Caption := 'Filechecker 2 ver. 0.01, by Corpsman, www.Corpsman.de';
   ResultsAsFolders := false;
@@ -167,6 +173,17 @@ Begin
   Constraints.MinHeight := Height;
   ComboBox1.text := '';
   ReportPendingJobsDoable := true;
+
+  // Do this via code, this is more save against changings of the consts ;)
+  StatusBar1.Panels[PanelIndexDataSetInfo].Width := 150;
+  StatusBar1.Panels[PanelIndexSumFileSize].Width := 100;
+  StatusBar1.Panels[PanelIndexPendingJobInfo].Width := 150;
+  StatusBar1.Panels[PanelIndexRootsInfo].Width := 150;
+  StatusBar1.Panels[PanelIndexSearchResultInfo].Width := 32;
+  StatusBar1.Panels[PanelIndexOpenTmpFolder].Width := 32;
+  For i := 0 To StatusBar1.Panels.Count - 1 Do
+    StatusBar1.Panels[i].Style := psOwnerDraw;
+
   LoadSettings;
   LoadQueryHistory;
   LoadPendingJobs;
@@ -408,6 +425,7 @@ Var
     folder, FileFolder: String;
   Begin
     If ResultsAsFolders Then Begin
+      SelectedFileSize := SelectedFileSize + DataBase[index].Size;
       // Abschneiden des Dateinamens
       FileFolder := ExcludeTrailingPathDelimiter(ExtractFilePath(DataBase[index].Filename));
       // Abschneiden des 1. Verzeichnis Namens (Staffel_**)
@@ -433,6 +451,7 @@ Var
     End
     Else Begin
       Selected[SelectedCnt] := index;
+      SelectedFileSize := SelectedFileSize + DataBase[index].Size;
       inc(SelectedCnt);
       ListBox1.Items.Add(DataBase[index].RootLabel + ': ' + DataBase[index].Filename);
     End;
@@ -475,6 +494,7 @@ Begin
   ListBox1.Items.BeginUpdate;
   ListBox1.Clear;
   SelectedCnt := 0;
+  SelectedFileSize := 0;
   If trim(s) = '' Then Begin
     UpdateSelectedState;
     ListBox1.Items.EndUpdate;
@@ -605,7 +625,7 @@ Begin
         ComboBox1Change(Nil);
         StatusBar1.Invalidate;
       End;
-    PenelIndexOpenTmpFolder: Begin
+    PanelIndexOpenTmpFolder: Begin
         OpenURL(JobTempFolder);
       End;
   End;
@@ -621,9 +641,10 @@ Begin
   For i := 0 To StatusBar1.Panels.Count - 1 Do Begin
     If panel = StatusBar1.Panels[i] Then Begin
       Case i Of
-        PanelIndexDataSetInfo: index := PanelIndexRootsInfo;
-        PanelIndexPendingJobInfo: index := PanelIndexSearchResultInfo;
-        PanelIndexRootsInfo: index := PenelIndexOpenTmpFolder;
+        PanelIndexDataSetInfo: index := ImageIndexExploreTo;
+        PanelIndexSumFileSize: index := ImageIndexFileSum;
+        PanelIndexPendingJobInfo: index := ImageIndexSkript;
+        PanelIndexRootsInfo: index := ImageIndexConnections;
         PanelIndexSearchResultInfo: Begin
             If ResultsAsFolders Then Begin
               index := ImageIndexFolder;
@@ -632,7 +653,9 @@ Begin
               index := ImageIndexFiles;
             End;
           End;
-        PenelIndexOpenTmpFolder: index := ImageIndexRainbow;
+        PanelIndexOpenTmpFolder: Begin
+            index := ImageIndexRainbow;
+          End;
       End;
       break;
     End;
@@ -649,10 +672,11 @@ Begin
   StatusBar1.Hint := '';
   Case CursorToPanelIndex() Of
     PanelIndexDataSetInfo: StatusBar1.Hint := '<actual selected datasets>/<num of total datasets>';
+    PanelIndexSumFileSize: StatusBar1.Hint := 'Filesize of all selected datasets';
     PanelIndexPendingJobInfo: StatusBar1.Hint := '<num of pending jobs>';
     PanelIndexRootsInfo: StatusBar1.Hint := '<num of visible root folders>/<num of total root folders>';
     PanelIndexSearchResultInfo: StatusBar1.Hint := 'toggle search results folders / files';
-    PenelIndexOpenTmpFolder: StatusBar1.Hint := 'click to open tmp folder';
+    PanelIndexOpenTmpFolder: StatusBar1.Hint := 'click to open tmp folder';
   End;
 End;
 
@@ -738,12 +762,13 @@ End;
 
 Procedure TForm1.UpdateSelectedState;
 Begin
-  StatusBar1.Panels[0].Text := format('%d/%d', [SelectedCnt, length(DataBase)]);
+  StatusBar1.Panels[PanelIndexDataSetInfo].Text := format('%d/%d', [SelectedCnt, length(DataBase)]);
+  StatusBar1.Panels[PanelIndexSumFileSize].Text := FileSizeToString(SelectedFileSize);
 End;
 
 Procedure TForm1.UpdatePendingJobs;
 Begin
-  StatusBar1.Panels[1].Text := format('%d', [length(PendingJobs)]);
+  StatusBar1.Panels[PanelIndexPendingJobInfo].Text := format('%d', [length(PendingJobs)]);
 End;
 
 Procedure TForm1.UpdateConnectedRoots;
@@ -754,7 +779,7 @@ Begin
   For i := 0 To high(RootFolders) Do Begin
     If DirectoryExists(RootFolders[i].RootFolder) Then inc(c);
   End;
-  StatusBar1.Panels[2].Text := format('%d/%d', [c, length(RootFolders)]);
+  StatusBar1.Panels[PanelIndexRootsInfo].Text := format('%d/%d', [c, length(RootFolders)]);
 End;
 
 End.
