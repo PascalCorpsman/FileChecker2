@@ -142,7 +142,9 @@ Begin
     If Not Restclient.Connect(aIP, aPort) Then exit;
     at := GetTickCount64;
     While at + 1500 >= GetTickCount64 Do Begin
-      Application.ProcessMessages;
+      Restclient.CallAction;
+      Delay(10);
+      Restclient.CallAction;
       result := Restclient.Connected;
       If result Then exit;
     End;
@@ -156,7 +158,7 @@ Begin
   at := GetTickCount64;
   While at + delta_in_ms >= GetTickCount64 Do Begin
     Application.ProcessMessages;
-    sleep(10); // TODO: was hier wohl der Cleverste wert ist ?
+    sleep(1); // TODO: was hier wohl der Cleverste wert ist ?
   End;
 End;
 

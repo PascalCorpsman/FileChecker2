@@ -127,6 +127,9 @@ Begin
       JobsDone[i] := true;
       ProgressBar1.Position := ProgressBar1.Position + 1;
       label5.caption := format('%d/%d', [ProgressBar1.Position, ProgressBar1.Max]);
+    End
+    Else Begin
+      nop(); // For debugging
     End;
     Application.ProcessMessages;
     If fAbort Then Begin

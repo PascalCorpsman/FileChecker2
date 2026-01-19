@@ -1,0 +1,79 @@
+object Form11: TForm11
+  Left = 324
+  Height = 333
+  Top = 107
+  Width = 524
+  Caption = 'Form11'
+  ClientHeight = 333
+  ClientWidth = 524
+  Position = poScreenCenter
+  LCLVersion = '4.99.0.0'
+  OnCreate = FormCreate
+  object Button1: TButton
+    Left = 8
+    Height = 25
+    Top = 296
+    Width = 506
+    Anchors = [akLeft, akRight, akBottom]
+    Caption = 'OK'
+    ModalResult = 1
+    TabOrder = 0
+  end
+  object ScrollBox1: TScrollBox
+    Left = 8
+    Height = 278
+    Top = 8
+    Width = 506
+    HorzScrollBar.Page = 496
+    VertScrollBar.Page = 88
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    ClientHeight = 276
+    ClientWidth = 504
+    TabOrder = 1
+    object GroupBox1: TGroupBox
+      Left = 8
+      Height = 80
+      Top = 8
+      Width = 488
+      ClientHeight = 78
+      ClientWidth = 486
+      TabOrder = 0
+      object Label1: TLabel
+        Left = 8
+        Height = 16
+        Top = 8
+        Width = 40
+        Caption = 'Label1'
+      end
+      object ProgressBar1: TProgressBar
+        Left = 8
+        Height = 20
+        Top = 32
+        Width = 472
+        TabOrder = 0
+      end
+      object Label2: TLabel
+        Left = 8
+        Height = 16
+        Top = 56
+        Width = 40
+        Caption = 'Label2'
+      end
+      object Label3: TLabel
+        Left = 440
+        Height = 16
+        Top = 8
+        Width = 40
+        Alignment = taRightJustify
+        Caption = 'Label3'
+      end
+      object Label4: TLabel
+        Left = 440
+        Height = 16
+        Top = 56
+        Width = 40
+        Caption = 'Label4'
+      end
+    end
+  end
+end

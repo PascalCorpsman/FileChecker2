@@ -127,6 +127,7 @@ Uses LCLType, math, lclintf
   // , unit8 // Detail Scan Rootfolder Dialog
   , unit9 // Sync with server
   // , unit10 // Select remote database dialog
+  , unit11 // Root Info dialog
   , ucopycomandercontroller
   ;
 
@@ -194,6 +195,7 @@ Begin
   UpdateConnectedRoots;
   CopyCommanderController_Init(LTCPComponent1);
   FormShowOnce := true;
+  //  - Testen: umbenennen einer Datei die Offline ist und dann den Job Durchführen
 End;
 
 Procedure TForm1.FormShow(Sender: TObject);
@@ -570,6 +572,7 @@ End;
 Procedure TForm1.FormCloseQuery(Sender: TObject; Var CanClose: Boolean);
 Begin
   Timer1.Enabled := false;
+  StoreSettings; // Wegen den Disk informationen müssen die Settings nun immer beim Beenden gespeichert werden ..
   StoreDataBase;
   StoreQueryHistory;
   StorePendingJobs;
@@ -627,6 +630,10 @@ Begin
       End;
     PanelIndexOpenTmpFolder: Begin
         OpenURL(JobTempFolder);
+      End;
+    PanelIndexRootsInfo: Begin
+        form11.Init;
+        form11.ShowModal;
       End;
   End;
 End;
@@ -777,7 +784,13 @@ Var
 Begin
   C := 0;
   For i := 0 To high(RootFolders) Do Begin
-    If DirectoryExists(RootFolders[i].RootFolder) Then inc(c);
+    If DirectoryExists(RootFolders[i].RootFolder) Then Begin
+      inc(c);
+      If RootFolders[i].DiskSize = 0 Then Begin
+        RootFolders[i].DiskSize := GetDiskSize(RootFolders[i].RootFolder);
+      End;
+      RootFolders[i].DiskFree := GetDiskFree(RootFolders[i].RootFolder);
+    End;
   End;
   StatusBar1.Panels[PanelIndexRootsInfo].Text := format('%d/%d', [c, length(RootFolders)]);
 End;

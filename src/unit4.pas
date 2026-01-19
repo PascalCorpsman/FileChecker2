@@ -64,6 +64,36 @@ Implementation
 
 Uses math, LCLType;
 
+// Wir müssen nun den Dateinamen Stamm heraus bekommen, dieser steht vor
+// <Zahl>x<Zahl> oder <Zahl>e<Zahl>, wenn es eine Serie ist, sonst ists eh egal.
+// Können wir das nicht finden -> kann kein Dateinamen Stamm bestimmt werden.
+
+Function GuessBaseFileName(aFilename: String): String;
+Var
+  i, j: Integer;
+Begin
+  aFilename := ExtractFileName(aFilename);
+  result := '';
+  For i := 2 To length(aFilename) - 1 Do Begin
+    If (
+      (aFilename[i] = 'x') Or
+      (aFilename[i] = 'X') Or
+      (aFilename[i] = 'e') Or
+      (aFilename[i] = 'E')
+      )
+      And (aFilename[i - 1] In ['0'..'9'])
+      And (aFilename[i + 1] In ['0'..'9'])
+      Then Begin
+      For j := i - 1 Downto 1 Do Begin
+        If (Not (aFilename[j] In ['0'..'9'])) Then Begin
+          result := copy(aFilename, 1, j);
+          exit;
+        End;
+      End;
+    End;
+  End;
+End;
+
 { TForm4 }
 
 Procedure TForm4.FormCreate(Sender: TObject);
@@ -108,8 +138,6 @@ Begin
   CheckListBox1.Items.BeginUpdate;
   For i := 0 To CheckListBox1.Items.Count - 1 Do Begin
     If CheckListBox1.Checked[i] Then Begin
-      removers[removerscnt] := i;
-      inc(removerscnt);
       If CheckBox1.Checked Then Begin
         s := ExtractFilePath(DataBase[fFiles[i]].Filename);
       End
@@ -119,8 +147,11 @@ Begin
       s := FixPathDelims(s);
       If s <> '' Then s := IncludeTrailingPathDelimiter(s);
       s := s + ExtractFileName(DataBase[fFiles[i]].Filename);
-      TryDoMove(fFiles[i], RootFolders[ComboBox2.ItemIndex].RootFolder, s);
-      CheckListBox1.Checked[i] := false;
+      If TryDoMove(fFiles[i], RootFolders[ComboBox2.ItemIndex].RootFolder, s) Then Begin
+        removers[removerscnt] := i;
+        inc(removerscnt);
+        CheckListBox1.Checked[i] := false;
+      End;
     End;
   End;
   // Wir löschen die bereits "erledigten" aus der Checklist heraus, die gibt es nun ja nicht mehr
@@ -183,7 +214,7 @@ End;
 Procedure TForm4.Init(Const Selection: TIntegers);
 Var
   i: Integer;
-  lf, af: String;
+  Filedir, lf, af: String;
 Begin
   faRow := -1;
   // Die Root Labels
@@ -215,7 +246,28 @@ Begin
   StringGrid1.EndUpdate();
   StringGrid1.AutoSizeColumns;
   // das muss nach dem Befüllen der Stringgrid sein !
-  Edit1.text := ExtractFileDir(DataBase[fFiles[0]].Filename);
+  Filedir := ExtractFileDir(DataBase[fFiles[0]].Filename);
+  If Filedir <> '' Then Begin
+    Edit1.text := Filedir;
+  End
+  Else Begin
+    Edit1.text := '';
+    lf := GuessBaseFileName(DataBase[fFiles[0]].Filename);
+    If lf <> '' Then Begin
+      // Die Aktuelle Quelle hat keine Verzeichnis Struktur, dann schauen wir mal
+      // ob dir die Datei nicht in der Datenbank finden wo sie ggf doch einen Ordner hat ..
+      // Suche von Hinten findet dann auch immer den Aktuellsten ;)
+      For i := high(DataBase) Downto 0 Do Begin
+        If pos(lf, DataBase[i].Filename) <> 0 Then Begin
+          af := ExtractFileDir(DataBase[i].Filename);
+          If af <> '' Then Begin
+            edit1.text := af;
+            exit;
+          End;
+        End;
+      End;
+    End;
+  End;
 End;
 
 End.

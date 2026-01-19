@@ -71,6 +71,8 @@ Type
     RootFolder: String; // Verzeichnis abschließend mit Pathdelim
     RootLabel: String; // Beschreigung die vom User eingegeben werden darf
     Excludes: TStringArray; // Liste der Unterverzeichnisse, welche ignoriert werden sollem beim Scannen
+    DiskSize: Int64; // Größe in Bytes der jeweiligen Festplatte 0 = Unbekannt
+    DiskFree: Int64; // -1 = Unbekannt
   End;
 
   TRootFolders = Array Of TRootFolder;
@@ -117,6 +119,7 @@ Procedure SortFileList(Var aList: TDataSets);
  * sonst Index in DataBase
  *)
 Function GetIndexOf(Const Root, Filename: String): integer;
+Function GetRootIndexOf(Const Root: String): integer;
 
 (*
  * Gibt zu einer Root das Passende Label zurück
@@ -131,7 +134,10 @@ Procedure CreateReportFile2(FileName: String;
   Const RenameList: TRenameList; Const CopyList, DelList: TFileList;
   Const Info: TReportInfos);
 
-Procedure TryDoMove(index: Integer; TargetRoot, TargetFilename: String);
+(*
+ * Wenn False, dann passt die Datei nicht auf TargetRoot
+ *)
+Function TryDoMove(index: Integer; TargetRoot, TargetFilename: String): Boolean;
 
 (*
  * Aktualisiert die Dynamischen Datenfelder des TDataSet Datensatzes von Index
@@ -158,9 +164,12 @@ Function FixPathDelims(aFileFolder: String): String;
 
 Function RevertJob(Const aJob: TJob): boolean;
 
+Function GetDiskSize(afolder: String): int64;
+Function GetDiskFree(afolder: String): int64;
+
 Implementation
 
-Uses ucopycomandercontroller;
+Uses ucopycomandercontroller, dialogs;
 
 Procedure Nop;
 Begin
@@ -293,6 +302,8 @@ Begin
   For i := 0 To cnt - 1 Do Begin
     RootFolders[i].RootFolder := IncludeTrailingPathDelimiter(IniFile.ReadString('RootFolders', 'Folder' + inttostr(i), ''));
     RootFolders[i].RootLabel := IniFile.ReadString('RootFolders', 'Label' + inttostr(i), '');
+    RootFolders[i].DiskSize := IniFile.ReadInt64('RootFolders', 'Size' + inttostr(i), 0);
+    RootFolders[i].DiskFree := IniFile.ReadInt64('RootFolders', 'Space' + inttostr(i), -1);
     ecnt := IniFile.ReadInteger('RootFolders', 'ExcludeCount' + inttostr(i), 0);
     setlength(RootFolders[i].Excludes, ecnt);
     For j := 0 To ecnt - 1 Do Begin
@@ -318,6 +329,8 @@ Begin
   For i := 0 To high(RootFolders) Do Begin
     IniFile.WriteString('RootFolders', 'Folder' + inttostr(i), RootFolders[i].RootFolder);
     IniFile.WriteString('RootFolders', 'Label' + inttostr(i), RootFolders[i].RootLabel);
+    IniFile.WriteInt64('RootFolders', 'Size' + inttostr(i), RootFolders[i].DiskSize);
+    IniFile.WriteInt64('RootFolders', 'Space' + inttostr(i), RootFolders[i].DiskFree);
 
     IniFile.WriteInteger('RootFolders', 'ExcludeCount' + inttostr(i), length(RootFolders[i].Excludes));
     For j := 0 To high(RootFolders[i].Excludes) Do Begin
@@ -535,6 +548,19 @@ Begin
   End;
 End;
 
+Function GetRootIndexOf(Const Root: String): integer;
+Var
+  i: Integer;
+Begin
+  result := -1;
+  For i := 0 To high(RootFolders) Do Begin
+    If RootFolders[i].RootFolder = Root Then Begin
+      result := i;
+      exit;
+    End;
+  End;
+End;
+
 Function RootFolderToRootLabel(Const aRoot: String): String;
 Var
   i: Integer;
@@ -561,10 +587,11 @@ Begin
   End;
 End;
 
-Procedure AddJob(Const aJob: TJob);
+Function AddJob(Const aJob: TJob): Boolean;
 Var
   Index: Integer;
 Begin
+  result := false;
   // TODO: ggf. noch irgendwelche Checks ?
   setlength(PendingJobs, high(PendingJobs) + 2);
   PendingJobs[high(PendingJobs)] := aJob;
@@ -573,7 +600,8 @@ Begin
    *)
   Index := GetIndexOf(ajob.SourceRoot, aJob.SourceFile);
   If index = -1 Then Begin
-    Raise exception.Create('Error: AddJob, can not find source: "' + aJob.SourceFile + '" in database.');
+    Showmessage('Error: AddJob, can not find source: "' + aJob.SourceFile + '" in database.');
+    exit;
   End;
   Case aJob.Job Of
     jMove: Begin
@@ -581,9 +609,10 @@ Begin
         DataBase[index].Filename := aJob.TargetFilename;
         RefreshDynamicContent(index);
         DBChanged := true;
+        result := true;
       End;
   Else Begin
-      Raise exception.Create('Error: AddJob, missing implementation for: ' + JobDetailToString(ajob.Job));
+      Raise exception.create('Error: AddJob, missing implementation for: ' + JobDetailToString(ajob.Job));
     End;
   End;
 End;
@@ -625,11 +654,24 @@ Begin
   sl.free;
 End;
 
-Procedure AddMoveJob(index: Integer; TargetRoot, TargetFilename: String);
+Function AddMoveJob(index: Integer; TargetRoot, TargetFilename: String): Boolean;
 Var
   TmpTarget, SourceName: String;
   job: TJob;
+  Rootindex: Integer;
 Begin
+  result := false;
+  Rootindex := GetRootIndexOf(TargetRoot);
+  If Rootindex = -1 Then Begin
+    showmessage('Error, invalid target root: ' + TargetRoot + ' for ' + ExtractFileName(TargetFilename));
+    exit;
+  End;
+  If RootFolders[Rootindex].DiskFree <> -1 Then Begin
+    If RootFolders[Rootindex].DiskFree < DataBase[index].Size Then Begin
+      showmessage('Error, ' + ExtractFileName(TargetFilename) + ' will not have enough space on ' + RootFolders[Rootindex].RootLabel);
+      exit;
+    End;
+  End;
   SourceName := DataBase[index].Root + DataBase[index].Filename;
   // Wenn es die Datei gibt und wir sie mittels Rename in unser Temp Verzeichnis
   // Schieben können, machen wir das, damit ists dann "aufgeräumter" ;)
@@ -646,29 +688,33 @@ Begin
   job.TargetRoot := TargetRoot;
   job.TargetFilename := TargetFilename;
   job.FileSize := DataBase[index].Size;
-  AddJob(job);
+  result := AddJob(job);
+  If result Then Begin
+    RootFolders[Rootindex].DiskFree := RootFolders[Rootindex].DiskFree - job.FileSize;
+  End;
 End;
 
-Procedure TryDoMove(index: Integer; TargetRoot, TargetFilename: String);
+Function TryDoMove(index: Integer; TargetRoot, TargetFilename: String): Boolean;
 Var
   TargetFolder, SourceName, TargetName: String;
 Begin
+  result := false;
   // Sind wir mit der Aktuellen Root verbunden ?
   SourceName := DataBase[index].Root + DataBase[index].Filename;
   If Not FileExists(SourceName) Then Begin
-    AddMoveJob(index, TargetRoot, TargetFilename);
+    result := AddMoveJob(index, TargetRoot, TargetFilename);
     exit;
   End;
   TargetFolder := ExtractFilePath(TargetFilename);
   // Sind wir mit dem Target Root verbunden ?
   If Not ForceDirectories(TargetRoot + TargetFolder) Then Begin
-    AddMoveJob(index, TargetRoot, TargetFilename);
+    result := AddMoveJob(index, TargetRoot, TargetFilename);
     exit;
   End;
   TargetName := TargetRoot + TargetFilename;
   // Scheint Alles Verbunden zu sein, geht das Move via Rename ?
   If Not RenameFile(SourceName, TargetName) Then Begin
-    AddMoveJob(index, TargetRoot, TargetFilename);
+    result := AddMoveJob(index, TargetRoot, TargetFilename);
     exit;
   End;
   // Es hat tatsächlich mit einem "Rename" Geklappt -> DB Updaten und wir sind fertig
@@ -676,6 +722,7 @@ Begin
   DataBase[index].Root := TargetRoot;
   RefreshDynamicContent(index);
   DBChanged := true;
+  result := true;
 End;
 
 Procedure RefreshDynamicContent(index: integer);
@@ -705,28 +752,42 @@ End;
 Function ExecuteJob(Const aJob: TJob): Boolean;
 Var
   fp: String;
-  index: Integer;
+  index, RootIndex: Integer;
 Begin
   result := false;
   If Not FileExists(aJob.RealSourceFile) Then exit;
   fp := ExtractFileDir(aJob.TargetFilename);
   If Not ForceDirectories(aJob.TargetRoot + fp) Then exit;
-  // Der Einfache Fall, wir können verschieben
+  // Der Einfacher Fall, wir können verschieben
   If RenameFile(ajob.RealSourceFile, aJob.TargetRoot + aJob.TargetFilename) Then Begin
     result := true;
+    exit;
+  End;
+  // Past die Datei überhaupt auf das Zielverzeichnis ?
+  RootIndex := GetRootIndexOf(aJob.TargetRoot);
+  If RootIndex = -1 Then Begin
+    showmessage('Error, invalid target root for: ' + ExtractFileName(aJob.TargetFilename));
+    exit;
+  End;
+  // Sollte eigentlich nicht vorkommen, schadet aber auch nicht..
+  If RootFolders[RootIndex].DiskFree = 0 Then RootFolders[RootIndex].DiskFree := GetDiskFree(RootFolders[RootIndex].RootFolder);
+  // Prüfen ob die Datei überhaupt "Platz" hat ;)
+  If aJob.FileSize > RootFolders[RootIndex].DiskFree Then Begin
+    showmessage('Error, not enough free diskspace on ' + RootFolders[RootIndex].RootLabel + ' to store: ' + ExtractFileName(aJob.TargetFilename));
     exit;
   End;
   // 1. Check if Copy Commander is Running
   If Not isCopyCommanderRestAPIRunning(CopyCommanderIP, CopyCommanderPort) Then Begin
     // 1.5 Start Copy Commander
     If Not StartCopyCommander(CopyCommanderCmd) Then Begin
-      // Todo: Fehlermeldung ?
+      showmessage('Error, unable to start copycommander2');
       exit;
     End;
     delay(2000); // TODO: gibt es hier einen besseren Weg als zu warten ?
     // 1.75 Check if Copy Commander is Running -> Not Error
     If Not isCopyCommanderRestAPIRunning(CopyCommanderIP, CopyCommanderPort) Then Begin
       // Todo: Fehlermeldung ?
+      showmessage('Error, copycommander2 does not respond on API');
       exit;
     End;
   End;
@@ -737,14 +798,19 @@ Begin
         If Not CopyCommanderMoveFile(aJob.RealSourceFile, aJob.TargetRoot + aJob.TargetFilename) Then exit;
         // Das Prüfen wir hier noch mal Explizit
         If Not FileExists(aJob.TargetRoot + aJob.TargetFilename) Then exit;
-        // TODO: Explizit auch die Dateigröße Prüfen !
+        // Explizit auch die Dateigröße Prüfen !
         index := GetIndexOf(aJob.TargetRoot, aJob.TargetFilename);
         If index = -1 Then exit;
         If GetFileSize(aJob.TargetRoot + aJob.TargetFilename) <> DataBase[index].Size Then Begin
-          Raise exception.Create('Error, during file moving, please check validity of file: ' + aJob.TargetRoot + aJob.TargetFilename);
+          Showmessage('Error, during file moving, please check validity of file: ' + aJob.TargetRoot + aJob.TargetFilename);
+          exit;
         End;
         result := true;
       End;
+  Else Begin
+      showmessage('Error, ' + JobDetailToString(aJob.Job) + ' not implemented in ufilechecker.ExecuteJob.');
+      exit;
+    End;
   End;
 End;
 
@@ -783,6 +849,47 @@ Begin
   End;
   setlength(result, cnt);
 End;
+
+Function GetDiskSize(afolder: String): int64;
+Var
+{$IFDEF Windows}
+  currP: String;
+{$ENDIF}
+  DiskNum: integer;
+Begin
+{$IFDEF Windows}
+  DiskNum := 0;
+  currP := GetCurrentDirUTF8;
+  SetCurrentDirUTF8(afolder);
+{$ELSE}
+  DiskNum := AddDisk(afolder);
+{$ENDIF}
+  result := DiskSize(DiskNum);
+{$IFDEF Windows}
+  SetCurrentDirUTF8(currP);
+{$ENDIF}
+End;
+
+Function GetDiskFree(afolder: String): int64;
+Var
+{$IFDEF Windows}
+  currP: String;
+{$ENDIF}
+  DiskNum: integer;
+Begin
+{$IFDEF Windows}
+  DiskNum := 0;
+  currP := GetCurrentDirUTF8;
+  SetCurrentDirUTF8(afolder);
+{$ELSE}
+  DiskNum := AddDisk(afolder);
+{$ENDIF}
+  result := DiskFree(DiskNum);
+{$IFDEF Windows}
+  SetCurrentDirUTF8(currP);
+{$ENDIF}
+End;
+
 
 End.
 
