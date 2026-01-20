@@ -20,7 +20,7 @@ Program server;
 
 Uses
   SysUtils, Classes, Base64, FPHttpApp, HTTPRoute, HTTPDefs, OpenSslSockets,
-  StrUtils, Types, IniFiles
+  StrUtils, Types, IniFiles, CustApp
   , DCPrijndael, DCPsha256, DCPcrypt2
   ;
 
@@ -56,6 +56,7 @@ Var
   Users: TUsers;
   ServerPort: integer;
   CertificateFileName, PrivateKeyFileName: String;
+  KeepRunning: Boolean;
 
 Procedure Log(value: String);
 Begin
@@ -581,32 +582,39 @@ Begin
   Log('Filechecker server ver. 0.04');
   Randomize;
   LoadSettings;
-  Application.Initialize;
-  HTTPRouter.RegisterRoute('/getchallenge', @getchallenge);
-  HTTPRouter.RegisterRoute('/getdb', @getDB);
-  HTTPRouter.RegisterRoute('/getdblist', @getDBList);
-  HTTPRouter.RegisterRoute('/reloadsettings', @ReloadSettings);
-  HTTPRouter.RegisterRoute('/requesttoken', @requesttoken);
-  HTTPRouter.RegisterRoute('/setdb', @setDB); // Benötigt Erweiterte Rechte
-  HTTPRouter.RegisterRoute('/setpassword', @setPassword);
-  HTTPRouter.RegisterRoute('/getuserlist', @getuserlist); // Benötigt Erweiterte Rechte
-  HTTPRouter.RegisterRoute('/setuserright', @setuserright); // Benötigt Erweiterte Rechte
-  HTTPRouter.RegisterRoute('/deluser', @deluser); // Benötigt Erweiterte Rechte
-  HTTPRouter.RegisterRoute('/adduser', @adduser); // Benötigt Erweiterte Rechte
-  Application.Port := ServerPort;
-  Application.UseSSL := true;
-  Application.CertificateData.Certificate.FileName := CertificateFileName;
-  Application.CertificateData.PrivateKey.FileName := PrivateKeyFileName;
-  Log('  is running on port: ' + inttostr(ServerPort));
-  Try
-    Application.Run;
-  Except
-    On av: Exception Do Begin
-      Log('Fatal: ' + av.Message);
+  KeepRunning := true;
+  While KeepRunning Do Begin
+    Application.Initialize;
+    HTTPRouter.RegisterRoute('/getchallenge', @getchallenge);
+    HTTPRouter.RegisterRoute('/getdb', @getDB);
+    HTTPRouter.RegisterRoute('/getdblist', @getDBList);
+    HTTPRouter.RegisterRoute('/reloadsettings', @ReloadSettings);
+    HTTPRouter.RegisterRoute('/requesttoken', @requesttoken);
+    HTTPRouter.RegisterRoute('/setdb', @setDB); // Benötigt Erweiterte Rechte
+    HTTPRouter.RegisterRoute('/setpassword', @setPassword);
+    HTTPRouter.RegisterRoute('/getuserlist', @getuserlist); // Benötigt Erweiterte Rechte
+    HTTPRouter.RegisterRoute('/setuserright', @setuserright); // Benötigt Erweiterte Rechte
+    HTTPRouter.RegisterRoute('/deluser', @deluser); // Benötigt Erweiterte Rechte
+    HTTPRouter.RegisterRoute('/adduser', @adduser); // Benötigt Erweiterte Rechte
+    Application.Port := ServerPort;
+    Application.UseSSL := true;
+    Application.CertificateData.Certificate.FileName := CertificateFileName;
+    Application.CertificateData.PrivateKey.FileName := PrivateKeyFileName;
+    Log('  is running on port: ' + inttostr(ServerPort));
+    Try
+      Application.Run;
+    Except
+      On av: Exception Do Begin
+        Log('Fatal: ' + av.Message);
+      End;
     End;
+    FreeAndNil(Application); // Clean Old Instance
+
+    // Create new Instance
+    Application := THTTPApplication.Create(Nil);
+    CustomApplication := Application;
   End;
   Log('  stopped.');
-  Application.free;
 End.
 
 End.
