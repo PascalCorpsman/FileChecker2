@@ -217,6 +217,7 @@ Var
   Filedir, lf, af: String;
 Begin
   faRow := -1;
+  CheckBox1.Checked := false;
   // Die Root Labels
   ComboBox2.Items.Clear;
   For i := 0 To high(RootFolders) Do Begin
