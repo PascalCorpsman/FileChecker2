@@ -27,11 +27,17 @@ Type
 
   TForm9 = Class(TForm)
     Button1: TButton;
+    OpenDialog1: TOpenDialog;
+    SaveDialog1: TSaveDialog;
     SpeedButton4: TSpeedButton;
     SpeedButton5: TSpeedButton;
+    SpeedButton6: TSpeedButton;
+    SpeedButton7: TSpeedButton;
     Procedure FormCreate(Sender: TObject);
     Procedure SpeedButton4Click(Sender: TObject);
     Procedure SpeedButton5Click(Sender: TObject);
+    Procedure SpeedButton6Click(Sender: TObject);
+    Procedure SpeedButton7Click(Sender: TObject);
   private
 
   public
@@ -150,6 +156,36 @@ Begin
   form3.GenerateResultsWith(form10.RadioGroup1.Items[form10.RadioGroup1.ItemIndex], DataBaseFilesAsTFileList(Nil), LoadedDataBaseFiles);
   form3.ShowModal;
   ModalResult := mrOK
+End;
+
+Procedure TForm9.SpeedButton6Click(Sender: TObject);
+Begin
+  // Export Database as .compressed file
+  If SaveDialog1.Execute Then Begin
+    If SaveCompressedDatabaseAs(SaveDialog1.FileName) Then Begin
+      showmessage('Done.');
+    End
+    Else Begin
+      showmessage('Error, unable to export.');
+    End;
+  End;
+End;
+
+Procedure TForm9.SpeedButton7Click(Sender: TObject);
+Var
+  sl: TStringList;
+Begin
+  // Import Compressed Database
+  If OpenDialog1.Execute Then Begin
+    sl := CompressedDatabaseToStringlist(OpenDialog1.FileName);
+    If Not assigned(sl) Then Begin
+      showmessage('Error, during uncompressing.');
+      exit;
+    End;
+    //    sl.SaveToFile('Database_Uncompressed.txt');
+    showmessage('Todo:, db is loaded, but not imported yet..');
+    sl.free;
+  End;
 End;
 
 End.

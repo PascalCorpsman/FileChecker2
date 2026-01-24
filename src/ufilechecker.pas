@@ -167,9 +167,12 @@ Function RevertJob(Const aJob: TJob): boolean;
 Function GetDiskSize(afolder: String): int64;
 Function GetDiskFree(afolder: String): int64;
 
+Function SaveCompressedDatabaseAs(Const Filename: String): Boolean;
+Function CompressedDatabaseToStringlist(Const Filename: String): TStringList;
+
 Implementation
 
-Uses ucopycomandercontroller, dialogs;
+Uses ucopycomandercontroller, dialogs, zstream;
 
 Procedure Nop;
 Begin
@@ -451,18 +454,24 @@ Begin
   End;
 End;
 
+Function DataBaseToStringList(): TStringList;
+Var
+  i: Integer;
+Begin
+  result := TStringList.Create;
+  For i := 0 To high(DataBase) Do Begin
+    result.add(DataSetToString(DataBase[i]));
+  End;
+End;
+
 Procedure StoreDataBase;
 Var
   sl: TStringList;
   fn: String;
-  i: Integer;
 Begin
   If Not DBChanged Then exit;
   fn := IncludeTrailingPathDelimiter(GetAppConfigDir(false)) + 'database.db';
-  sl := TStringList.Create;
-  For i := 0 To high(DataBase) Do Begin
-    sl.add(DataSetToString(DataBase[i]));
-  End;
+  sl := DataBaseToStringList();
   sl.SaveToFile(fn);
   sl.free;
   DBChanged := false;
@@ -890,6 +899,59 @@ Begin
 {$ENDIF}
 End;
 
+Function SaveCompressedDatabaseAs(Const Filename: String): Boolean;
+Var
+  sl: TStringList;
+  destm, m: TMemoryStream;
+  c: Tcompressionstream;
+  i64: Int64;
+Begin
+  result := false;
+  // 1. Database to TStringList
+  sl := DataBaseToStringList();
+  // 2. TStringList to Stream
+  m := TMemoryStream.Create;
+  sl.SaveToStream(m);
+  sl.free;
+  m.Position := 0;
+  // 3. Compress Stream
+  destm := TMemoryStream.Create;
+  c := Tcompressionstream.create(cldefault, destm);
+  i64 := m.Size;
+  destm.Write(i64, sizeof(i64));
+  c.CopyFrom(m, m.Size);
+  c.free;
+  m.free;
+  // 4. Save Compressed Stream
+  Try
+    destm.SaveToFile(Filename);
+  Except
+    destm.free;
+    exit;
+  End;
+  destm.free;
+  result := true;
+End;
+
+Function CompressedDatabaseToStringlist(Const Filename: String): TStringList;
+Var
+  mdest, m: TMemoryStream;
+  d: Tdecompressionstream;
+  i64: Int64;
+Begin
+  m := TMemoryStream.Create;
+  m.LoadFromFile(Filename);
+  i64 := 0;
+  m.read(i64, sizeof(i64));
+  d := Tdecompressionstream.create(m);
+  mdest := TMemoryStream.Create;
+  mdest.CopyFrom(d, i64);
+  d.free;
+  result := TStringList.Create;
+  mdest.Position := 0;
+  result.LoadFromStream(mdest);
+  mdest.free;
+End;
 
 End.
 

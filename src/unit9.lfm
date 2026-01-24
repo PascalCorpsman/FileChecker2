@@ -45,4 +45,42 @@ object Form9: TForm9
     ModalResult = 1
     TabOrder = 0
   end
+  object SpeedButton6: TSpeedButton
+    Left = 48
+    Height = 32
+    Hint = 'Export compressed database'
+    Top = 8
+    Width = 32
+    Anchors = [akTop, akRight]
+    Images = Form1.ImageList1
+    ImageIndex = 19
+    ShowHint = True
+    ParentShowHint = False
+    OnClick = SpeedButton6Click
+  end
+  object SpeedButton7: TSpeedButton
+    Left = 168
+    Height = 32
+    Hint = 'Import compressed database'
+    Top = 8
+    Width = 32
+    Anchors = [akTop, akRight]
+    Images = Form1.ImageList1
+    ImageIndex = 20
+    ShowHint = True
+    ParentShowHint = False
+    OnClick = SpeedButton7Click
+  end
+  object SaveDialog1: TSaveDialog
+    DefaultExt = '.cdb'
+    Filter = 'Compressed Database|*.cdb|All|*'
+    Left = 32
+    Top = 48
+  end
+  object OpenDialog1: TOpenDialog
+    DefaultExt = '.cdb'
+    Filter = 'Compressed Database|*.cdb|All|*'
+    Left = 181
+    Top = 48
+  end
 end
