@@ -52,8 +52,15 @@ Type
 
   TUsers = Array Of TUser;
 
+  TClient = Record
+    ClientID: String;
+    Users: TUsers;
+  End;
+
+  TClients = Array Of TClient;
+
 Var
-  Users: TUsers;
+  Clients: TClients;
   ServerPort: integer;
   CertificateFileName, PrivateKeyFileName: String;
   KeepRunning: Boolean;
@@ -66,39 +73,62 @@ End;
 Procedure LoadSettings;
 Var
   ini: TIniFile;
-  i: Integer;
+  i, j: Integer;
 Begin
-  users := Nil;
+  Clients := Nil;
   ini := TIniFile.Create('settings.ini');
   ServerPort := ini.ReadInteger('Server', 'Port', 8443);
   CertificateFileName := ini.ReadString('Server', 'Certificate', 'server.crt');
   PrivateKeyFileName := ini.ReadString('Server', 'PrivateKey', 'server.key');
-  setlength(users, ini.ReadInteger('User', 'Count', 0));
-  For i := 0 To high(Users) Do Begin
-    users[i].Username := ini.ReadString('User', 'Name' + inttostr(i), '');
-    users[i].Password := ini.ReadString('User', 'PW' + inttostr(i), '');
-    users[i].Rights := ini.ReadInteger('User', 'Rights' + inttostr(i), 0);
-    fillchar(users[i].LastChallenge[0], sizeof(users[i].LastChallenge[0]), 0);
-    Log('  adduser: ' + users[i].Username);
+  setlength(Clients, ini.ReadInteger('Client', 'Count', 0));
+  For i := 0 To high(Clients) Do Begin
+    Clients[i].ClientID := ini.ReadString('Client', 'ID' + inttostr(i), '');
+    Log('  addclient: ' + Clients[i].ClientID);
+    setlength(Clients[i].Users, ini.ReadInteger('ClientUser' + inttostr(i), 'Count', 0));
+    For j := 0 To high(Clients[i].Users) Do Begin
+      Clients[i].Users[j].Username := ini.ReadString('ClientUser' + inttostr(i), 'Name' + inttostr(j), '');
+      Clients[i].Users[j].Password := ini.ReadString('ClientUser' + inttostr(i), 'PW' + inttostr(j), '');
+      Clients[i].Users[j].Rights := ini.ReadInteger('ClientUser' + inttostr(i), 'Rights' + inttostr(j), 0);
+      fillchar(Clients[i].Users[j].LastChallenge[0], sizeof(Clients[i].Users[j].LastChallenge[0]), 0);
+      Log('   adduser: ' + Clients[i].Users[j].Username);
+    End;
   End;
   ini.free;
 End;
 
 (*
- * -1 = user nicht bekannt
+ * -1,-1 = user nicht bekannt
+ * x = Client
+ * y = User
  *)
 
-Function GetUserIndex(Username: String): integer;
+Function GetClientUserIndex(Client, Username: String): Tpoint;
 Var
-  i: Integer;
+  i, j: Integer;
 Begin
-  result := -1;
-  For i := 0 To high(Users) Do Begin
-    If users[i].Username = Username Then Begin
-      result := i;
-      exit;
+  result := point(-1, -1);
+  For j := 0 To high(Clients) Do Begin
+    If Clients[j].ClientID = Client Then Begin
+      For i := 0 To high(Clients[j].Users) Do Begin
+        If Clients[j].Users[i].Username = Username Then Begin
+          result := point(j, i);
+          exit;
+        End;
+      End;
     End;
   End;
+End;
+
+(*
+ * Gibt den Dateinamen für Client und User wie er auf der Festplatte liegt zurück.
+ *)
+
+Function GetClientUserDBFileName(UserIndex: TPoint): String;
+Begin
+  result := '';
+  If (UserIndex.x < 0) Or (UserIndex.x > high(Clients)) Then exit;
+  If (UserIndex.Y < 0) Or (UserIndex.Y > high(Clients[UserIndex.x].Users)) Then exit;
+  result := Clients[UserIndex.x].ClientID + PathDelim + 'db' + Clients[UserIndex.x].Users[UserIndex.y].Username + '.db';
 End;
 
 Function GetIDFromStringArray(ID: String; Const StringArray: TStringDynArray): String;
@@ -123,39 +153,43 @@ Begin
 End;
 
 (*
- * Gibt den Userindex zurück, oder -1, im Fehlerfall
+ * -1,-1 = user nicht bekannt
+ * x = Client
+ * y = User
  *)
 
-Function UserExistsAndIsAllowed(aRequest: TRequest; aResponse: TResponse): Integer;
+Function UserExistsAndIsAllowed(aRequest: TRequest; aResponse: TResponse): TPoint;
 Var
   StringArray: TStringDynArray;
-  Username, Token: String;
+  Username, Token, Client: String;
 Begin
-  result := -1;
+  result := point(-1, -1);
   StringArray := SplitString(aRequest.Authorization, ' ');
   // Kennen wir den User ?
   Username := GetIDFromStringArray('Username', StringArray);
-  If Username = '' Then Begin
+  Client := GetIDFromStringArray('Client', StringArray);
+  If (Username = '') Or (client = '') Then Begin
     SendEmptyResponce(aResponse, 401);
     exit;
   End;
   Username := DecodeStringBase64(Username);
-  result := GetUserIndex(Username);
-  If result = -1 Then Begin
+  Client := DecodeStringBase64(Client);
+  result := GetClientUserIndex(Client, Username);
+  If result.x = -1 Then Begin
     SendEmptyResponce(aResponse, 401);
     Exit;
   End;
   // Timeout
-  If now > Users[result].TokenCreationTime + delta10min Then Begin
+  If now > Clients[Result.x].Users[result.Y].TokenCreationTime + delta10min Then Begin
     SendEmptyResponce(aResponse, 401);
-    result := -1;
+    result := point(-1, -1);
     Exit;
   End;
   // Ist der User berechtigt ?
   Token := GetIDFromStringArray('Bearer', StringArray);
-  If token <> Users[result].Token Then Begin
+  If token <> Clients[Result.x].Users[result.Y].Token Then Begin
     SendEmptyResponce(aResponse, 401);
-    result := -1;
+    result := point(-1, -1);
     Exit;
   End;
 End;
@@ -164,23 +198,24 @@ Procedure getDB(aRequest: TRequest; aResponse: TResponse);
 Var
   Filestream: TFileStream;
   dbName, RawBody, EncodedBody, DatabaseFileName: String;
-  UserIndex, i: Integer;
+  UserIndex: Tpoint;
+  i: Integer;
 Begin
   // Prechecks
   UserIndex := UserExistsAndIsAllowed(aRequest, aResponse);
-  If UserIndex = -1 Then exit;
+  If UserIndex.x = -1 Then exit;
   dbName := DecodeStringBase64(aRequest.Content);
   // Prüfen ob der dbName tatsächlich auf eine Datenbank zeigt oder irgendwo hin
   // Nur Datenbanken zulassen !
   DatabaseFileName := '';
-  For i := 0 To high(Users) Do Begin
-    If (Users[i].Username) = dbName Then Begin
-      DatabaseFileName := 'db' + dbName + '.db';
+  For i := 0 To high(Clients[UserIndex.x].Users) Do Begin
+    If (Clients[UserIndex.x].Users[i].Username) = dbName Then Begin
+      DatabaseFileName := GetClientUserDBFileName(UserIndex);
       break;
     End;
   End;
   If (DatabaseFileName <> '') And (FileExists(DatabaseFileName)) Then Begin
-    Log('Send ' + DatabaseFileName + ' to ' + Users[UserIndex].Username);
+    Log('Send ' + DatabaseFileName + ' to ' + Clients[UserIndex.x].Users[i].Username);
     Filestream := TFileStream.Create(DatabaseFileName, fmOpenRead Or fmShareDenyWrite);
     RawBody := '';
     Try
@@ -204,20 +239,21 @@ End;
 Procedure getDBList(aRequest: TRequest; aResponse: TResponse);
 Var
   EncodedBody: String;
-  UserIndex, i: Integer;
+  UserIndex: Tpoint;
+  i: Integer;
   sl: TStringList;
 Begin
   // Prechecks
   UserIndex := UserExistsAndIsAllowed(aRequest, aResponse);
-  If UserIndex = -1 Then exit;
+  If UserIndex.x = -1 Then exit;
   sl := TStringList.Create;
-  For i := 0 To high(Users) Do Begin
-    If FileExists('db' + Users[i].Username + '.db') Then Begin
-      sl.Add(Users[i].Username);
+  For i := 0 To high(Clients[UserIndex.x].Users) Do Begin
+    If FileExists(GetClientUserDBFileName(point(userindex.x, i))) Then Begin
+      sl.Add(Clients[UserIndex.x].Users[i].Username);
     End;
   End;
   EncodedBody := EncodeStringBase64(sl.text);
-  Log(Users[i].Username + ' requested DB list, found ' + IntToStr(sl.count));
+  Log(Clients[UserIndex.x].Users[UserIndex.y].Username + ' requested DB list for client ' + Clients[UserIndex.x].ClientID + ', found ' + IntToStr(sl.count));
   sl.free;
   aResponse.Code := 200;
   aResponse.ContentLength := EncodedBody.Length;
@@ -227,17 +263,17 @@ End;
 
 Procedure ReloadSettings(aRequest: TRequest; aResponse: TResponse);
 Var
-  UserIndex: Integer;
+  UserIndex: Tpoint;
 Begin
   // Prechecks
   UserIndex := UserExistsAndIsAllowed(aRequest, aResponse);
-  If UserIndex = -1 Then exit;
+  If UserIndex.x = -1 Then exit;
   // Spezielle Berechtigungen Prüfen
-  If Users[UserIndex].Rights And RightToReloadSettings = 0 Then Begin
+  If Clients[UserIndex.x].Users[UserIndex.y].Rights And RightToReloadSettings = 0 Then Begin
     SendEmptyResponce(aResponse, 403);
     Exit;
   End;
-  Log(Users[UserIndex].Username + ' triggert reload settings.');
+  Log(Clients[UserIndex.x].Users[UserIndex.y].Username + ' triggert reload settings.');
   LoadSettings;
   SendEmptyResponce(aResponse, 200);
 End;
@@ -246,13 +282,13 @@ Procedure setDB(aRequest: TRequest; aResponse: TResponse);
 Var
   Filestream: TFileStream;
   dbString: String;
-  UserIndex: Integer;
+  UserIndex: TPoint;
 Begin
   // Prechecks
   UserIndex := UserExistsAndIsAllowed(aRequest, aResponse);
-  If UserIndex = -1 Then exit;
+  If UserIndex.x = -1 Then exit;
   // Spezielle Berechtigungen Prüfen
-  If Users[UserIndex].Rights And RightToSetDB = 0 Then Begin
+  If Clients[UserIndex.x].Users[UserIndex.y].Rights And RightToSetDB = 0 Then Begin
     SendEmptyResponce(aResponse, 403);
     Exit;
   End;
@@ -263,10 +299,10 @@ Begin
     Exit;
   End;
   Try
-    Filestream := TFileStream.Create('db' + Users[UserIndex].Username + '.db', fmCreate Or fmOpenWrite);
+    Filestream := TFileStream.Create(GetClientUserDBFileName(UserIndex), fmCreate Or fmOpenWrite);
     Filestream.Write(dbString[1], length(dbString));
     Filestream.free;
-    Log('Received db from ' + Users[UserIndex].Username);
+    Log('Received db from ' + Clients[UserIndex.x].Users[UserIndex.y].Username + ' for client ' + Clients[UserIndex.x].ClientID);
   Except
     SendEmptyResponce(aResponse, 500);
     Exit;
@@ -276,42 +312,43 @@ End;
 
 Procedure setPassword(aRequest: TRequest; aResponse: TResponse);
 Var
-  UserIndex: integer;
+  UserIndex: TPoint;
   NewPW: String;
   ini: TIniFile;
 Begin
   // Prechecks
   UserIndex := UserExistsAndIsAllowed(aRequest, aResponse);
-  If UserIndex = -1 Then exit;
+  If UserIndex.x = -1 Then exit;
   NewPW := DecodeStringBase64(aRequest.Content);
-  Log('Set new password for: ' + Users[UserIndex].Username);
+  Log(Clients[UserIndex.x].ClientID + ' set new password for: ' + Clients[UserIndex.x].Users[UserIndex.y].Username);
   // Sofort übernehmen
-  Users[UserIndex].Password := NewPW;
+  Clients[UserIndex.x].Users[UserIndex.y].Password := NewPW;
   // Und für den Reboot ;)
   ini := TIniFile.Create('settings.ini');
-  ini.WriteString('User', 'PW' + inttostr(UserIndex), NewPW);
+  ini.WriteString('ClientUser' + inttostr(UserIndex.x), 'PW' + inttostr(UserIndex.y), NewPW);
   ini.free;
   SendEmptyResponce(aResponse, 200);
 End;
 
 Procedure getuserlist(aRequest: TRequest; aResponse: TResponse);
 Var
-  UserIndex, i: integer;
+  UserIndex: Tpoint;
+  i: integer;
   sl: TStringList;
   m: TMemoryStream;
   RawBody, EncodedBody: String;
 Begin
   // Prechecks
   UserIndex := UserExistsAndIsAllowed(aRequest, aResponse);
-  If UserIndex = -1 Then exit;
+  If UserIndex.x = -1 Then exit;
   // Spezielle Berechtigungen Prüfen
-  If Users[UserIndex].Rights And RightToEditUsers = 0 Then Begin
+  If Clients[UserIndex.x].Users[UserIndex.y].Rights And RightToEditUsers = 0 Then Begin
     SendEmptyResponce(aResponse, 403);
     Exit;
   End;
   sl := TStringList.Create;
-  For i := 0 To high(Users) Do Begin
-    sl.add(Format('%d;%s', [Users[i].Rights, Users[i].Username]));
+  For i := 0 To high(Clients[UserIndex.x].Users) Do Begin
+    sl.add(Format('%d;%s', [Clients[UserIndex.x].Users[i].Rights, Clients[UserIndex.x].Users[i].Username]));
   End;
   m := TMemoryStream.Create;
   sl.SaveToStream(m);
@@ -322,7 +359,7 @@ Begin
   m.Read(RawBody[1], m.Size);
   m.free;
   EncodedBody := EncodeStringBase64(RawBody);
-  Log(Users[UserIndex].Username + ' requested userlist');
+  Log(Clients[UserIndex.x].ClientID + ': ' + Clients[UserIndex.x].Users[UserIndex.y].Username + ' requested userlist');
   aResponse.Code := 200;
   aResponse.ContentLength := EncodedBody.Length;
   aResponse.Content := EncodedBody;
@@ -331,7 +368,7 @@ End;
 
 Procedure setuserright(aRequest: TRequest; aResponse: TResponse);
 Var
-  UserIndex: integer;
+  UserIndex: Tpoint;
   Content, UserName: String;
   sa: TStringArray;
   UserRight, i: Integer;
@@ -339,9 +376,9 @@ Var
 Begin
   // Prechecks
   UserIndex := UserExistsAndIsAllowed(aRequest, aResponse);
-  If UserIndex = -1 Then exit;
+  If UserIndex.x = -1 Then exit;
   // Spezielle Berechtigungen Prüfen
-  If Users[UserIndex].Rights And RightToEditUsers = 0 Then Begin
+  If Clients[UserIndex.x].Users[UserIndex.y].Rights And RightToEditUsers = 0 Then Begin
     SendEmptyResponce(aResponse, 403);
     Exit;
   End;
@@ -353,14 +390,14 @@ Begin
   End;
   UserName := sa[0];
   UserRight := strtointdef(sa[1], 0);
-  For i := 0 To high(Users) Do Begin
-    If Users[i].Username = Username Then Begin
+  For i := 0 To high(Clients[UserIndex.x].Users) Do Begin
+    If Clients[UserIndex.x].Users[i].Username = Username Then Begin
       Log('Set new rights for: ' + Username);
       // Sofort übernehmen
-      Users[i].Rights := UserRight;
+      Clients[UserIndex.x].Users[i].Rights := UserRight;
       // Und für den Reboot ;)
       ini := TIniFile.Create('settings.ini');
-      ini.WriteInteger('User', 'Rights' + inttostr(i), UserRight);
+      ini.WriteInteger('ClientUser' + inttostr(UserIndex.x), 'Rights' + inttostr(i), UserRight);
       ini.free;
       SendEmptyResponce(aResponse, 200);
       exit;
@@ -372,34 +409,35 @@ End;
 
 Procedure deluser(aRequest: TRequest; aResponse: TResponse);
 Var
-  UserIndex, i, j: integer;
+  UserIndex: Tpoint;
+  i, j: integer;
   Username: String;
   ini: TIniFile;
 Begin
   // Prechecks
   UserIndex := UserExistsAndIsAllowed(aRequest, aResponse);
-  If UserIndex = -1 Then exit;
+  If UserIndex.x = -1 Then exit;
   // Spezielle Berechtigungen Prüfen
-  If Users[UserIndex].Rights And RightToEditUsers = 0 Then Begin
+  If Clients[UserIndex.X].Users[UserIndex.Y].Rights And RightToEditUsers = 0 Then Begin
     SendEmptyResponce(aResponse, 403);
     Exit;
   End;
   Username := DecodeStringBase64(aRequest.Content);
-  For i := 0 To high(Users) Do Begin
-    If Users[i].Username = Username Then Begin
+  For i := 0 To high(Clients[UserIndex.X].Users) Do Begin
+    If Clients[UserIndex.X].Users[i].Username = Username Then Begin
       // Sofort Übernehmen
-      For j := i To high(Users) - 1 Do Begin
-        Users[j] := Users[j + 1];
+      For j := i To high(Clients[UserIndex.X].Users) - 1 Do Begin
+        Clients[UserIndex.X].Users[j] := Clients[UserIndex.X].Users[j + 1];
       End;
-      setlength(Users, high(Users));
+      setlength(Clients[UserIndex.X].Users, high(Clients[UserIndex.X].Users));
       // Und für den Reboot ;)
       ini := TIniFile.Create('settings.ini');
-      For j := i To high(Users) Do Begin
-        ini.WriteString('User', 'Name' + inttostr(j), users[j].Username);
-        ini.WriteString('User', 'PW' + inttostr(j), users[j].Password);
-        ini.WriteInteger('User', 'Rights' + inttostr(j), users[j].Rights);
+      For j := i To high(Clients[UserIndex.X].Users) Do Begin
+        ini.WriteString('ClientUser' + inttostr(UserIndex.X), 'Name' + inttostr(j), Clients[UserIndex.X].Users[j].Username);
+        ini.WriteString('ClientUser' + inttostr(UserIndex.X), 'PW' + inttostr(j), Clients[UserIndex.X].Users[j].Password);
+        ini.WriteInteger('ClientUser' + inttostr(UserIndex.X), 'Rights' + inttostr(j), Clients[UserIndex.X].Users[j].Rights);
       End;
-      ini.WriteInteger('User', 'Count', length(Users));
+      ini.WriteInteger('ClientUser' + inttostr(UserIndex.X), 'Count', length(Clients[UserIndex.X].Users));
       ini.free;
       Log('Del user: ' + Username);
       SendEmptyResponce(aResponse, 200);
@@ -412,16 +450,17 @@ End;
 
 Procedure adduser(aRequest: TRequest; aResponse: TResponse);
 Var
-  UserIndex, i: integer;
+  UserIndex: Tpoint;
+  i: integer;
   Username, Content, Password: String;
   ini: TIniFile;
   Rights: Integer;
 Begin
   // Prechecks
   UserIndex := UserExistsAndIsAllowed(aRequest, aResponse);
-  If UserIndex = -1 Then exit;
+  If UserIndex.x = -1 Then exit;
   // Spezielle Berechtigungen Prüfen
-  If Users[UserIndex].Rights And RightToEditUsers = 0 Then Begin
+  If Clients[UserIndex.X].Users[UserIndex.Y].Rights And RightToEditUsers = 0 Then Begin
     SendEmptyResponce(aResponse, 403);
     Exit;
   End;
@@ -431,56 +470,59 @@ Begin
   Username := copy(Content, 1, pos(';', Content) - 1);
   delete(Content, 1, pos(';', Content));
   Password := Content;
-  For i := 0 To high(Users) Do Begin
-    If Users[i].Username = Username Then Begin // User existiert schon -> Raus
+  For i := 0 To high(Clients[UserIndex.X].Users) Do Begin
+    If Clients[UserIndex.X].Users[i].Username = Username Then Begin // User existiert schon -> Raus
       SendEmptyResponce(aResponse, 404);
       exit;
     End;
   End;
   // Sofort Übernehmen
-  setlength(Users, high(Users) + 2);
-  users[High(Users)].Username := Username;
-  users[High(Users)].Rights := Rights;
-  users[High(Users)].Password := Password;
-  fillchar(users[High(Users)].LastChallenge[0], sizeof(users[High(Users)].LastChallenge[0]), 0);
+  setlength(Clients[UserIndex.X].Users, high(Clients[UserIndex.X].Users) + 2);
+  Clients[UserIndex.X].Users[High(Clients[UserIndex.X].Users)].Username := Username;
+  Clients[UserIndex.X].Users[High(Clients[UserIndex.X].Users)].Rights := Rights;
+  Clients[UserIndex.X].Users[High(Clients[UserIndex.X].Users)].Password := Password;
+  fillchar(Clients[UserIndex.X].Users[High(Clients[UserIndex.X].Users)].LastChallenge[0], sizeof(Clients[UserIndex.X].Users[High(Clients[UserIndex.X].Users)].LastChallenge[0]), 0);
   // Und für den Reboot ;)
   ini := TIniFile.Create('settings.ini');
-  ini.WriteString('User', 'Name' + inttostr(High(Users)), users[high(Users)].Username);
-  ini.WriteString('User', 'PW' + inttostr(High(Users)), users[high(Users)].Password);
-  ini.WriteInteger('User', 'Rights' + inttostr(High(Users)), users[high(Users)].Rights);
-  ini.WriteInteger('User', 'Count', length(Users));
+  ini.WriteString('ClientUser' + inttostr(UserIndex.X), 'Name' + inttostr(High(Clients[UserIndex.X].Users)), Clients[UserIndex.X].Users[high(Clients[UserIndex.X].Users)].Username);
+  ini.WriteString('ClientUser' + inttostr(UserIndex.X), 'PW' + inttostr(High(Clients[UserIndex.X].Users)), Clients[UserIndex.X].Users[high(Clients[UserIndex.X].Users)].Password);
+  ini.WriteInteger('ClientUser' + inttostr(UserIndex.X), 'Rights' + inttostr(High(Clients[UserIndex.X].Users)), Clients[UserIndex.X].Users[high(Clients[UserIndex.X].Users)].Rights);
+  ini.WriteInteger('ClientUser' + inttostr(UserIndex.X), 'Count', length(Clients[UserIndex.X].Users));
   ini.free;
-  Log('  adduser: ' + Username);
+  Log(Clients[UserIndex.X].ClientID + ',  adduser: ' + Username);
   SendEmptyResponce(aResponse, 200);
 End;
 
 Procedure getchallenge(aRequest: TRequest; aResponse: TResponse);
 Var
-  UserIndex: integer;
-  Username: String;
-  Seed, EncodedBody: String;
+  StringArray: TStringDynArray;
+  UserIndex: Tpoint;
+  Username, Seed, EncodedBody, Client: String;
   i: Integer;
 Begin
   // User Requests seed
-  Username := GetIDFromStringArray('Username', SplitString(aRequest.Authorization, ' '));
-  If Username = '' Then Begin
+  StringArray := SplitString(aRequest.Authorization, ' ');
+  Username := GetIDFromStringArray('Username', StringArray);
+  Client := GetIDFromStringArray('Client', StringArray);
+  If (Username = '') Or (client = '') Then Begin
     SendEmptyResponce(aResponse, 401);
     exit;
   End;
   Username := DecodeStringBase64(Username);
-  Log('Got a challenge request from user: ' + Username);
+  Client := DecodeStringBase64(Client);
   // Prüfen ob es den User bei uns überhaupt gibt, ..
-  UserIndex := GetUserIndex(Username);
-  If UserIndex = -1 Then Begin
+  UserIndex := GetClientUserIndex(Client, Username);
+  If UserIndex.x = -1 Then Begin
     SendEmptyResponce(aResponse, 401);
     Exit;
   End;
+  Log(Clients[UserIndex.x].ClientID + ', got a challenge request from user: ' + Username);
   // Bekannte User bekommen eine Challenge die wir zur Authentifizierungsprüfung speichern müssen
   seed := '';
   setlength(Seed, SeedSize);
   For i := 0 To SeedSize - 1 Do Begin
     seed[i + 1] := chr(random(256));
-    Users[UserIndex].LastChallenge[i] := ord(seed[i + 1]);
+    Clients[UserIndex.x].Users[UserIndex.y].LastChallenge[i] := ord(seed[i + 1]);
   End;
 {$IFDEF Debug}
   Log('Send challenge:');
@@ -498,23 +540,28 @@ End;
 
 Procedure requesttoken(aRequest: TRequest; aResponse: TResponse);
 Var
-  token, ChallengeString, Username, rndString, EncodedBody: String;
-  i, UserIndex: Integer;
+  token, ChallengeString, Username, rndString, EncodedBody, Client: String;
+  i: Integer;
+  UserIndex: TPoint;
   unEncryptedSeed, EncryptedSeed: TMemoryStream;
   EncrytpStream: TDCP_rijndael;
+  StringArray: TStringDynArray;
 Begin
-  Username := GetIDFromStringArray('Username', SplitString(aRequest.Authorization, ' '));
-  If Username = '' Then Begin
+  StringArray := SplitString(aRequest.Authorization, ' ');
+  Username := GetIDFromStringArray('Username', StringArray);
+  Client := GetIDFromStringArray('Client', StringArray);
+  If (Username = '') Or (client = '') Then Begin
     SendEmptyResponce(aResponse, 401);
     exit;
   End;
   Username := DecodeStringBase64(Username);
-  Log('Got a challenge responce from user: ' + Username);
-  UserIndex := GetUserIndex(Username);
-  If UserIndex = -1 Then Begin
+  client := DecodeStringBase64(client);
+  UserIndex := GetClientUserIndex(client, Username);
+  If UserIndex.x = -1 Then Begin
     SendEmptyResponce(aResponse, 401);
     Exit;
   End;
+  Log(Clients[UserIndex.x].ClientID + ', got a challenge responce from user: ' + Username);
   ChallengeString := DecodeStringBase64(aRequest.Content);
 {$IFDEF Debug}
   For i := 1 To length(ChallengeString) Do Begin
@@ -525,7 +572,7 @@ Begin
   rndString := '';
   setlength(rndString, SeedSize);
   For i := 0 To SeedSize - 1 Do Begin
-    rndString[i + 1] := chr(Users[UserIndex].LastChallenge[i]);
+    rndString[i + 1] := chr(Clients[UserIndex.x].Users[UserIndex.Y].LastChallenge[i]);
   End;
   unEncryptedSeed := TMemoryStream.Create;
   unEncryptedSeed.Write(rndString[1], length(rndString));
@@ -533,7 +580,7 @@ Begin
   // 2. Verschlüsseln wie es der User gemacht hat
   EncryptedSeed := TMemoryStream.Create;
   EncrytpStream := TDCP_rijndael.Create(Nil);
-  EncrytpStream.InitStr(Users[UserIndex].Password, TDCP_sha256);
+  EncrytpStream.InitStr(Clients[UserIndex.x].Users[UserIndex.y].Password, TDCP_sha256);
   EncrytpStream.CipherMode := cmCBC; // Cipher-Block Chaining (CBC)
   EncrytpStream.EncryptStream(unEncryptedSeed, EncryptedSeed, unEncryptedSeed.Size);
   EncrytpStream.free;
@@ -555,8 +602,8 @@ Begin
   For i := 0 To TokenSize - 1 Do Begin
     Token[i + 1] := chr(random(256));
   End;
-  Users[UserIndex].TokenCreationTime := now;
-  Log(Username + ' logged in');
+  Clients[UserIndex.x].Users[UserIndex.y].TokenCreationTime := now;
+  Log(Clients[UserIndex.x].ClientID + ', ' + Username + ' logged in');
 {$IFDEF Debug}
   Log('Send token:');
   For i := 1 To length(Token) Do Begin
@@ -565,7 +612,7 @@ Begin
   writeln('');
 {$ENDIF}
   EncodedBody := EncodeStringBase64(Token);
-  Users[UserIndex].Token := EncodedBody;
+  Clients[UserIndex.x].Users[UserIndex.y].Token := EncodedBody;
   aResponse.Code := 200;
   aResponse.ContentLength := length(EncodedBody);
   aResponse.Content := EncodedBody;
@@ -578,8 +625,9 @@ Begin
    *          0.02 - getdblist, getdb benötigt nun den Namen der Datenbank
    *          0.03 - setDB hatte falsche Dateinamen abgelegt.
    *          0.04 - remote user management
+   *          0.05 - add multi client support, changed complete interface !
    *)
-  Log('Filechecker server ver. 0.04');
+  Log('Filechecker server ver. 0.05');
   Randomize;
   LoadSettings;
   KeepRunning := true;

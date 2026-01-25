@@ -132,7 +132,7 @@ End;
 
 Procedure TForm2.Button10Click(Sender: TObject);
 Begin
-  If Login(Edit6.text, edit7.text, edit10.text, edit9.text) Then Begin
+  If Login(Edit6.text, edit7.text, ClientID, edit10.text, edit9.text) Then Begin
     showmessage('Login succeed.');
   End
   Else Begin
@@ -157,7 +157,7 @@ Begin
     showmessage('Error, new password is only space empty.');
     exit;
   End;
-  If Login(Edit6.text, edit7.text, edit10.text, OldPW) Then Begin
+  If Login(Edit6.text, edit7.text, ClientID, edit10.text, OldPW) Then Begin
     If SetPassword(NewPW) Then Begin
       edit9.text := NewPW;
       showmessage('Password change succeed.');

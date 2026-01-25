@@ -49,6 +49,8 @@ Uses
   , ufilechecker
   ;
 
+//Leere Ordner löschen, wenn die Letzte Datei daraus heraus verschoben wurde ..
+
 Type
 
   { TForm1 }
@@ -796,4 +798,5 @@ Begin
 End;
 
 End.
+
 

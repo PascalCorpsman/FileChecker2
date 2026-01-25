@@ -28,6 +28,7 @@ Const
   Divider = ';';
   CopyCommanderIP = '127.0.0.1';
   CopyCommanderPort = 8080;
+  ClientID = 'Filechecker';
 
 Type
 

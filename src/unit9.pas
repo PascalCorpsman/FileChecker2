@@ -70,6 +70,7 @@ Begin
   If Not Login(
     IniFile.ReadString('Server', 'URL', 'https://127.0.0.1'),
     IniFile.ReadString('Server', 'Port', '8443'),
+    ClientID,
     IniFile.ReadString('Server', 'Username', ''),
     IniFile.ReadString('Server', 'Password', '')
     ) Then Begin
@@ -113,6 +114,7 @@ Begin
   If Not Login(
     IniFile.ReadString('Server', 'URL', 'https://127.0.0.1'),
     IniFile.ReadString('Server', 'Port', '8443'),
+    ClientID,
     IniFile.ReadString('Server', 'Username', ''),
     IniFile.ReadString('Server', 'Password', '')
     ) Then Begin
