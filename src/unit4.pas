@@ -127,12 +127,15 @@ End;
 
 Procedure TForm4.Button3Click(Sender: TObject);
 Var
-  i, removerscnt: Integer;
-  s: String;
+  i, removerscnt, j: Integer;
+  s, SourceFolder: String;
   removers: TIntegers;
+  SourceFolders: TStringArray;
+  sl: TStringList;
 Begin
   // Do it
   removers := Nil;
+  SourceFolders := Nil;
   setlength(removers, CheckListBox1.Items.Count);
   removerscnt := 0;
   CheckListBox1.Items.BeginUpdate;
@@ -147,7 +150,10 @@ Begin
       s := FixPathDelims(s);
       If s <> '' Then s := IncludeTrailingPathDelimiter(s);
       s := s + ExtractFileName(DataBase[fFiles[i]].Filename);
+      SourceFolder := ExtractFilePath(DataBase[fFiles[i]].Root + DataBase[fFiles[i]].Filename);
       If TryDoMove(fFiles[i], RootFolders[ComboBox2.ItemIndex].RootFolder, s) Then Begin
+        SetLength(SourceFolders, high(SourceFolders) + 2);
+        SourceFolders[high(SourceFolders)] := SourceFolder;
         removers[removerscnt] := i;
         inc(removerscnt);
         CheckListBox1.Checked[i] := false;
@@ -156,9 +162,34 @@ Begin
   End;
   // Wir löschen die bereits "erledigten" aus der Checklist heraus, die gibt es nun ja nicht mehr
   For i := removerscnt - 1 Downto 0 Do Begin
+    // ggf. Leere Verzeichnisse löschen
     CheckListBox1.Items.Delete(removers[i]);
+    For j := i To high(fFiles) - 1 Do Begin
+      fFiles[j] := fFiles[j + 1];
+    End;
+    setlength(fFiles, high(fFiles));
+  End;
+  // Im Preserve Path modus versuchen wir die evtl. Leer gewordenen Verzeichnisse zu löschen
+  If CheckBox1.Checked Then Begin
+    For i := 0 To high(SourceFolders) Do Begin
+      // Das Verzeichnis wurde schon gelöscht
+      If Not DirectoryExists(SourceFolders[i]) Then Continue;
+      // Ansonsten von "unten" in Richtung Root alles Löschen, was geht ..
+      s := IncludeTrailingPathDelimiter(SourceFolders[i]);
+      If GetRootIndexOf(s) <> -1 Then s := ''; // Bei Root ist schluss !
+      While (s <> '') And (DirIsEmpty(s)) Do Begin
+        If Not RemoveDir(s) Then Begin
+          s := '';
+          Continue;
+        End;
+        s := IncludeTrailingPathDelimiter(ExtractFileDir(ExcludeTrailingPathDelimiter(s)));
+        If GetRootIndexOf(s) <> -1 Then s := ''; // Bei Root ist schluss !
+      End;
+    End;
   End;
   CheckListBox1.Items.EndUpdate;
+  // Nichts mehr da -> Raus
+  If CheckListBox1.Items.Count = 0 Then Button4.Click;
 End;
 
 Procedure TForm4.CheckBox1Click(Sender: TObject);

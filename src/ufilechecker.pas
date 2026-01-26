@@ -171,6 +171,8 @@ Function GetDiskFree(afolder: String): int64;
 Function SaveCompressedDatabaseAs(Const Filename: String): Boolean;
 Function CompressedDatabaseToStringlist(Const Filename: String): TStringList;
 
+Function DirIsEmpty(aDir: String): Boolean;
+
 Implementation
 
 Uses ucopycomandercontroller, dialogs, zstream;
@@ -952,6 +954,22 @@ Begin
   mdest.Position := 0;
   result.LoadFromStream(mdest);
   mdest.free;
+End;
+
+Function DirIsEmpty(aDir: String): Boolean;
+Var
+  SR: TSearchRec;
+Begin
+  result := true;
+  aDir := IncludeTrailingPathDelimiter(aDir);
+  If FindFirst(aDir + '*', faAnyFile, SR) = 0 Then Begin
+    Repeat
+      If Not (faDirectory And SR.Attr <> 0) Then Begin
+        result := false;
+      End;
+    Until (FindNext(SR) <> 0) Or (Not result);
+  End;
+  FindClose(SR);
 End;
 
 End.
