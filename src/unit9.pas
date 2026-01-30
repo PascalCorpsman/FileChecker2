@@ -51,7 +51,7 @@ Implementation
 
 {$R *.lfm}
 
-Uses LCLType, usslconnector, udirsync, ufilechecker, unit3, Unit10;
+Uses LCLType, usslconnector, udirsync, ufilechecker, unit3;
 
 { TForm9 }
 
@@ -99,6 +99,7 @@ Var
   LoadedDataBaseFiles: TFileList;
   i: Integer;
   d: TDataSet;
+  SelectedDataBase: String;
 Begin
   // Download
   If Not assigned(RootFolders) Then Begin
@@ -122,23 +123,7 @@ Begin
     Logout;
     exit;
   End;
-  sl := GetDBList();
-  If Not assigned(sl) Then Begin
-    showmessage('Error, unable to load database list.');
-    Logout;
-    sl.free;
-    exit;
-  End;
-  If sl.Count = 0 Then Begin
-    showmessage('Error, no databases on the server available.');
-    Logout;
-    sl.free;
-    exit;
-  End;
-  form10.InitWith(sl);
-  sl.free;
-  If form10.showmodal <> mrOK Then exit;
-  m := DownloadDB(form10.RadioGroup1.Items[form10.RadioGroup1.ItemIndex]);
+  m := RequestaDBAndDownloadIt(SelectedDataBase);
   If Not assigned(m) Then Begin
     showmessage('Error, unable to download database.');
     exit;
@@ -155,7 +140,7 @@ Begin
     LoadedDataBaseFiles[i].Root := RootFolders[0].RootFolder;
   End;
   sl.free;
-  form3.GenerateResultsWith(form10.RadioGroup1.Items[form10.RadioGroup1.ItemIndex], DataBaseFilesAsTFileList(Nil), LoadedDataBaseFiles);
+  form3.GenerateResultsWith(SelectedDataBase, DataBaseFilesAsTFileList(Nil), LoadedDataBaseFiles);
   form3.ShowModal;
   ModalResult := mrOK
 End;

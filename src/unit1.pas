@@ -129,7 +129,6 @@ Uses LCLType, math, lclintf
   // , unit7 // Show pending Jobs Details
   // , unit8 // Detail Scan Rootfolder Dialog
   , unit9 // Sync with server
-  // , unit10 // Select remote database dialog
   , unit11 // Root Info dialog
   , unit12 // category editor
   , ucopycomandercontroller
