@@ -30,6 +30,7 @@ Type
     Button1: TButton;
     Button2: TButton;
     DateEdit1: TDateEdit;
+    Edit1: TEdit;
     Label1: TLabel;
     Label10: TLabel;
     Label11: TLabel;
@@ -74,7 +75,7 @@ Begin
   label6.caption := FileSizeToString(DataBase[aDataSetIndex].Size);
   // Tatsächliche Einträge in der Datenbank
 //    Rating: TStringArray; // ";" Liste von Freitexten
-//    Categories: TStringArray; // ";" Liste von Freitexten
+  edit1.text := DataBase[aDataSetIndex].Categories.Join(', ');
   memo1.Text := DataBase[aDataSetIndex].Comment; // Freitext, den der User beliebig setzen kann
   //    Scedule: TDateTime; // 0 = Deaktiviert, <> Zeitpunkt in der Zukunft, ab dem "Comment" gezeigt wird wenn nach Wiedervorlagen gefragt wird
   label12.caption := FormatDateTime('HH:MM:SS, DD.MM.YYYY', DataBase[aDataSetIndex].Added);

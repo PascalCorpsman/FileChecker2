@@ -46,6 +46,7 @@ Type
   private
 
     fAbort: Boolean;
+    Procedure RefreshGrid();
   public
     Procedure Init;
 
@@ -65,7 +66,14 @@ Uses
   , unit7 // Job Detail Dialog
   ;
 
-{ TForm6 }
+Const
+  _Out = 0;
+  _In = 1;
+
+Var
+  InOut: Array Of Array[0..1] Of int64;
+
+  { TForm6 }
 
 Procedure TForm6.FormCreate(Sender: TObject);
 Begin
@@ -80,6 +88,17 @@ Begin
   form7.init;
   form7.ShowModal;
   init;
+End;
+
+Procedure TForm6.RefreshGrid();
+Var
+  i: Integer;
+Begin
+  For i := 0 To high(RootFolders) Do Begin
+    StringGrid1.Cells[0, i + 1] := RootFolders[i].RootLabel;
+    StringGrid1.Cells[1, i + 1] := FileSizeToString(InOut[i, _Out]);
+    StringGrid1.Cells[2, i + 1] := FileSizeToString(InOut[i, _In]);
+  End;
 End;
 
 Procedure TForm6.Button3Click(Sender: TObject);
@@ -111,7 +130,7 @@ End;
 
 Procedure TForm6.Button1Click(Sender: TObject);
 Var
-  cnt, i, j: Integer;
+  cnt, i, j, index: Integer;
   JobsDone: Array Of Boolean;
 Begin
   button1.Enabled := false;
@@ -127,11 +146,24 @@ Begin
       JobsDone[i] := true;
       ProgressBar1.Position := ProgressBar1.Position + 1;
       label5.caption := format('%d/%d', [ProgressBar1.Position, ProgressBar1.Max]);
+      // !! ACHTUNG !!, die Umkehrfunktion zu dem hier ist implementiert in TForm6.Init
+      Case PendingJobs[i].Job Of
+        jMove: Begin
+            index := GetRootIndexOf(PendingJobs[i].SourceRoot);
+            InOut[index][_Out] := InOut[index][_Out] - PendingJobs[i].FileSize;
+            index := GetRootIndexOf(PendingJobs[i].TargetRoot);
+            InOut[index][_In] := InOut[index][_In] - PendingJobs[i].FileSize;
+          End;
+      Else Begin
+          Raise exception.create('Error: TForm6.Button1Click, missing handler for ' + JobDetailToString(PendingJobs[i].Job));
+        End;
+      End;
+      RefreshGrid();
+      Application.ProcessMessages;
     End
     Else Begin
       nop(); // For debugging
     End;
-    Application.ProcessMessages;
     If fAbort Then Begin
       break;
     End;
@@ -160,26 +192,9 @@ End;
 
 Procedure TForm6.Init;
 
-  Function RootToIndex(Const aRoot: String): integer;
-  Var
-    i: Integer;
-  Begin
-    result := -1;
-    For i := 0 To high(RootFolders) Do Begin
-      If RootFolders[i].RootFolder = aRoot Then Begin
-        result := i;
-        break;
-      End;
-    End;
-  End;
-
-Const
-  _Out = 0;
-  _In = 1;
-
 Var
   i, index: Integer;
-  InOut: Array Of Array[0..1] Of int64;
+
 Begin
   label2.caption := inttostr(length(PendingJobs));
   label4.caption := inttostr(PendingJobsDoable());
@@ -191,11 +206,12 @@ Begin
     InOut[i][_In] := 0;
   End;
   For i := 0 To high(PendingJobs) Do Begin
+    // !! ACHTUNG !!, die Umkehrfunktion zu dem hier ist implementiert in TForm6.Button1Click
     Case PendingJobs[i].Job Of
       jMove: Begin
-          index := RootToIndex(PendingJobs[i].SourceRoot);
+          index := GetRootIndexOf(PendingJobs[i].SourceRoot);
           InOut[index][_Out] := InOut[index][_Out] + PendingJobs[i].FileSize;
-          index := RootToIndex(PendingJobs[i].TargetRoot);
+          index := GetRootIndexOf(PendingJobs[i].TargetRoot);
           InOut[index][_In] := InOut[index][_In] + PendingJobs[i].FileSize;
         End;
     Else Begin
@@ -204,11 +220,7 @@ Begin
     End;
   End;
   StringGrid1.RowCount := length(RootFolders) + 1;
-  For i := 0 To high(RootFolders) Do Begin
-    StringGrid1.Cells[0, i + 1] := RootFolders[i].RootLabel;
-    StringGrid1.Cells[1, i + 1] := FileSizeToString(InOut[i, _Out]);
-    StringGrid1.Cells[2, i + 1] := FileSizeToString(InOut[i, _In]);
-  End;
+  RefreshGrid();
   StringGrid1.AutoSizeColumns;
 End;
 

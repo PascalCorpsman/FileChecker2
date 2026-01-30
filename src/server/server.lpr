@@ -281,7 +281,7 @@ End;
 Procedure setDB(aRequest: TRequest; aResponse: TResponse);
 Var
   Filestream: TFileStream;
-  dbString: String;
+  dbfilename, dbString: String;
   UserIndex: TPoint;
 Begin
   // Prechecks
@@ -298,8 +298,13 @@ Begin
     SendEmptyResponce(aResponse, 403);
     Exit;
   End;
+  dbfilename := GetClientUserDBFileName(UserIndex);
   Try
-    Filestream := TFileStream.Create(GetClientUserDBFileName(UserIndex), fmCreate Or fmOpenWrite);
+    If Not ForceDirectories(ExtractFilePath(dbfilename)) Then Begin
+      SendEmptyResponce(aResponse, 500);
+      Exit;
+    End;
+    Filestream := TFileStream.Create(dbfilename, fmCreate Or fmOpenWrite);
     Filestream.Write(dbString[1], length(dbString));
     Filestream.free;
     Log('Received db from ' + Clients[UserIndex.x].Users[UserIndex.y].Username + ' for client ' + Clients[UserIndex.x].ClientID);

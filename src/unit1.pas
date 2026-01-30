@@ -62,8 +62,10 @@ Type
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
     MenuItem4: TMenuItem;
+    MenuItem5: TMenuItem;
     PopupMenu1: TPopupMenu;
     Separator1: TMenuItem;
+    Separator2: TMenuItem;
     SpeedButton2: TSpeedButton;
     SpeedButton3: TSpeedButton;
     SpeedButton4: TSpeedButton;
@@ -83,6 +85,7 @@ Type
     Procedure MenuItem2Click(Sender: TObject);
     Procedure MenuItem3Click(Sender: TObject);
     Procedure MenuItem4Click(Sender: TObject);
+    Procedure MenuItem5Click(Sender: TObject);
     Procedure SpeedButton2Click(Sender: TObject);
     Procedure SpeedButton3Click(Sender: TObject);
     Procedure SpeedButton4Click(Sender: TObject);
@@ -128,6 +131,7 @@ Uses LCLType, math, lclintf
   , unit9 // Sync with server
   // , unit10 // Select remote database dialog
   , unit11 // Root Info dialog
+  , unit12 // category editor
   , ucopycomandercontroller
   ;
 
@@ -168,6 +172,7 @@ Var
 Begin
   Caption := 'Filechecker 2 ver. 0.01, by Corpsman, www.Corpsman.de';
   ResultsAsFolders := false;
+  Categories := TStringList.Create;
   IniFile := TIniFile.Create(GetAppConfigFile(false, true));
   Inifile.CacheUpdates := true;
   Constraints.MinWidth := Width;
@@ -188,6 +193,7 @@ Begin
   LoadSettings;
   LoadQueryHistory;
   LoadPendingJobs;
+  LoadCategories;
 
   LoadDataBase;
   UpdateSelectedState;
@@ -414,6 +420,20 @@ Begin
   If (e = '') And (de = '') Then showmessage('Deleted ' + FileSizeToString(fs));
 End;
 
+Procedure TForm1.MenuItem5Click(Sender: TObject);
+Begin
+  // Categories
+  If ListBox1.ItemIndex = -1 Then exit;
+  If ListBox1.items[ListBox1.ItemIndex] = SearchInfo Then exit;
+  If Selected[ListBox1.ItemIndex] < 0 Then Begin
+    showmessage('Categories not available in folder mode');
+    exit;
+  End;
+  form12.Init(Selected[ListBox1.ItemIndex]);
+  form12.ShowModal;
+
+End;
+
 Procedure TForm1.ComboBox1Change(Sender: TObject);
 
 Var
@@ -489,6 +509,24 @@ Var
     End;
   End;
 
+  Procedure SearchInCategories;
+  Var
+    i, j: Integer;
+    res: Boolean;
+  Begin
+    For i := 0 To high(DataBase) Do Begin
+      // Kommentar Matcht nicht
+      If Not assigned(DataBase[i].Categories) Then Continue;
+      res := false;
+      For j := 0 To high(DataBase[i].Categories) Do Begin
+        If pos(filename, lowercase(DataBase[i].Categories[j])) <> 0 Then res := true;
+      End;
+      If Not res Then Continue;
+      // TODO: weitere Checks ?
+      AddEntryToList(i);
+    End;
+  End;
+
 Var
   s: String;
 Begin
@@ -530,6 +568,7 @@ Begin
   Case Root Of
     // Sonder Such Sachen
     'comment': SearchInComments;
+    'cat': SearchInCategories;
   Else Begin
       // das Reguläre suchen über Dateinamen
       // Root = '', oder eben eine spezielle Root
@@ -576,7 +615,10 @@ Begin
   StoreDataBase;
   StoreQueryHistory;
   StorePendingJobs;
+  StoreCategories;
   CopyCommanderController_Clear();
+  Categories.free;
+  Categories := Nil;
   IniFile.Free;
   IniFile := Nil;
 End;
@@ -615,6 +657,7 @@ End;
 Procedure TForm1.SpeedButton5Click(Sender: TObject);
 Begin
   // Execute Pending Jobs
+  If form6.visible Then exit;
   form6.Init;
   form6.ShowModal;
   UpdatePendingJobs; // Danach dann ..

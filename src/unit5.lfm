@@ -134,4 +134,12 @@ object Form5: TForm5
     Width = 48
     Caption = 'Label12'
   end
+  object Edit1: TEdit
+    Left = 80
+    Height = 26
+    Top = 126
+    Width = 360
+    TabOrder = 4
+    Text = 'Edit1'
+  end
 end

@@ -101,17 +101,19 @@ Var
   SelectedFileSize: Int64 = 0;
   PendingJobs: Array Of TJob = Nil;
   DBChanged: Boolean = false;
-
+  Categories: TStringList = Nil;
   SearchCharBorder: integer = 3;
   SearchInfo: String = 'Enter at least 3 chars to start search';
 
 Procedure LoadSettings;
 Procedure LoadDataBase;
 Procedure LoadPendingJobs;
+Procedure LoadCategories;
 
 Procedure StoreSettings;
 Procedure StoreDataBase;
 Procedure StorePendingJobs;
+Procedure StoreCategories;
 
 Procedure SortFileList(Var aList: TDataSets);
 
@@ -380,8 +382,18 @@ Begin
   result.Filename := sa[0];
   result.Root := sa[1];
   result.Size := StrToInt64(sa[2]);
-  result.Rating := sa[3].Split(Divider);
-  result.Categories := sa[4].Split(Divider);
+  If trim(sa[3]) = '' Then Begin
+    result.Rating := Nil;
+  End
+  Else Begin
+    result.Rating := sa[3].Split(Divider);
+  End;
+  If trim(sa[4]) = '' Then Begin
+    result.Categories := Nil;
+  End
+  Else Begin
+    result.Categories := sa[4].Split(Divider);
+  End;
   result.Comment := DeSerializeString(sa[5]);
   result.Scedule := StrToFloat(sa[6], fs);
   result.Added := StrToFloat(sa[7], fs);
@@ -497,6 +509,16 @@ Begin
   End;
 End;
 
+Procedure LoadCategories;
+Var
+  i: Integer;
+Begin
+  Categories.Clear;
+  For i := 0 To IniFile.ReadInteger('Categories', 'Count', 0) - 1 Do Begin
+    Categories.Add(IniFile.ReadString('Categories', 'Cat' + inttostr(i), ''));
+  End;
+End;
+
 Procedure StorePendingJobs;
 Var
   i: integer;
@@ -510,6 +532,17 @@ Begin
     IniFile.WriteString('Jobs', 'TargetRoot' + IntToStr(i), PendingJobs[i].TargetRoot);
     IniFile.WriteString('Jobs', 'TargetFilename' + IntToStr(i), PendingJobs[i].TargetFilename);
     IniFile.WriteInt64('Jobs', 'FileSize' + IntToStr(i), PendingJobs[i].FileSize);
+  End;
+  inifile.UpdateFile;
+End;
+
+Procedure StoreCategories;
+Var
+  i: Integer;
+Begin
+  IniFile.WriteInteger('Categories', 'Count', Categories.Count);
+  For i := 0 To Categories.Count - 1 Do Begin
+    IniFile.WriteString('Categories', 'Cat' + inttostr(i), Categories[i]);
   End;
   inifile.UpdateFile;
 End;
@@ -724,6 +757,10 @@ Begin
     exit;
   End;
   TargetName := TargetRoot + TargetFilename;
+  If GetIndexOf(TargetRoot, TargetFilename) <> -1 Then Begin
+    ShowMessage('Error: ' + TargetName + ' already exists.');
+    exit;
+  End;
   // Scheint Alles Verbunden zu sein, geht das Move via Rename ?
   If Not RenameFile(SourceName, TargetName) Then Begin
     result := AddMoveJob(index, TargetRoot, TargetFilename);

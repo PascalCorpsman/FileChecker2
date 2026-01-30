@@ -156,6 +156,14 @@
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Unit11"/>
       </Unit>
+      <Unit>
+        <Filename Value="unit12.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="Form12"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="Unit12"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

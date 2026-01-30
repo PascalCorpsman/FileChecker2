@@ -1,0 +1,127 @@
+object Form12: TForm12
+  Left = 340
+  Height = 298
+  Top = 118
+  Width = 386
+  Caption = 'Form12'
+  ClientHeight = 298
+  ClientWidth = 386
+  Position = poScreenCenter
+  LCLVersion = '4.99.0.0'
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  object ListBox1: TListBox
+    Left = 88
+    Height = 80
+    Top = 48
+    Width = 240
+    ItemHeight = 0
+    TabOrder = 0
+    TopIndex = -1
+  end
+  object Label1: TLabel
+    Left = 8
+    Height = 16
+    Top = 48
+    Width = 64
+    Caption = 'Categories'
+  end
+  object Button1: TButton
+    Left = 336
+    Height = 25
+    Top = 9
+    Width = 40
+    Caption = 'Add'
+    TabOrder = 1
+    OnClick = Button1Click
+  end
+  object Label2: TLabel
+    Left = 8
+    Height = 16
+    Top = 18
+    Width = 54
+    Caption = 'Category'
+  end
+  object Edit1: TEdit
+    Left = 88
+    Height = 26
+    Top = 8
+    Width = 240
+    TabOrder = 2
+    Text = 'Edit1'
+  end
+  object Button2: TButton
+    Left = 336
+    Height = 80
+    Top = 48
+    Width = 40
+    Caption = 'Del'
+    TabOrder = 3
+    OnClick = Button2Click
+  end
+  object GroupBox1: TGroupBox
+    Left = 8
+    Height = 72
+    Top = 176
+    Width = 368
+    Caption = ' Dataset '
+    ClientHeight = 55
+    ClientWidth = 366
+    TabOrder = 4
+    object Label3: TLabel
+      Left = 8
+      Height = 16
+      Top = 8
+      Width = 54
+      Caption = 'Filename'
+    end
+    object Label4: TLabel
+      Left = 80
+      Height = 16
+      Top = 8
+      Width = 40
+      Caption = 'Label4'
+    end
+    object Label5: TLabel
+      Left = 8
+      Height = 16
+      Top = 32
+      Width = 64
+      Caption = 'Categories'
+    end
+    object Label6: TLabel
+      Left = 80
+      Height = 16
+      Top = 32
+      Width = 40
+      Caption = 'Label6'
+    end
+  end
+  object Button3: TButton
+    Left = 8
+    Height = 25
+    Top = 264
+    Width = 368
+    Caption = 'OK'
+    ModalResult = 1
+    TabOrder = 5
+  end
+  object Button4: TButton
+    Left = 88
+    Height = 25
+    Top = 136
+    Width = 136
+    Caption = 'Add category to --\/'
+    TabOrder = 6
+    OnClick = Button4Click
+  end
+  object Button5: TButton
+    Left = 240
+    Height = 25
+    Top = 136
+    Width = 136
+    Caption = 'Del category to --\/'
+    TabOrder = 7
+    OnClick = Button5Click
+  end
+end
