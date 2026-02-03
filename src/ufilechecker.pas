@@ -177,7 +177,11 @@ Function DirIsEmpty(aDir: String): Boolean;
 
 Implementation
 
-Uses ucopycomandercontroller, dialogs, zstream;
+Uses ucopycomandercontroller, dialogs, zstream
+{$IFDEF Windows}
+  , LazFileUtils
+{$ENDIF}
+  ;
 
 Procedure Nop;
 Begin

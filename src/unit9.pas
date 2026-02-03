@@ -124,6 +124,7 @@ Begin
     exit;
   End;
   m := RequestaDBAndDownloadIt(SelectedDataBase);
+  Logout;
   If Not assigned(m) Then Begin
     showmessage('Error, unable to download database.');
     exit;
