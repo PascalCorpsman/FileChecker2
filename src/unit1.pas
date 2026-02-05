@@ -443,7 +443,7 @@ Var
 
   Procedure AddEntryToList(index: integer);
   Var
-    folder, FileFolder: String;
+    s, folder, FileFolder, p, n: String;
   Begin
     If ResultsAsFolders Then Begin
       SelectedFileSize := SelectedFileSize + DataBase[index].Size;
@@ -463,12 +463,20 @@ Var
        * Zum Glück sind die Datensätze sortiert, eine pos Prüfung über die Listbox
        * wäre hier rechenzeit technisch tödlich..
        *)
-      If folder = LastFolder Then exit;
+      If folder = LastFolder Then Begin
+        s := ListBox1.Items[ListBox1.Items.Count - 1];
+        p := copy(s, 1, pos('(', s));
+        delete(s, 1, length(p));
+        n := copy(s, 1, pos(')', s) - 1);
+        s := p + inttostr(strtointdef(n, 0) + 1) + ')';
+        ListBox1.Items[ListBox1.Items.Count - 1] := s;
+        exit;
+      End;
       LastFolder := Folder;
       // If pos(folder, listbox1.Items.Text) <> 0 Then exit;
       Selected[SelectedCnt] := -1;
       inc(SelectedCnt);
-      ListBox1.Items.Add(folder);
+      ListBox1.Items.Add(folder + ' (1)');
     End
     Else Begin
       Selected[SelectedCnt] := index;
