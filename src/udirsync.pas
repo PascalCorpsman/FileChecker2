@@ -260,8 +260,13 @@ Begin
         inc(d);
       End
       Else Begin
-        // Unterschiedlich -> In die CopyList
-        AddToCopyList(s);
+        // Die Datei hat ihre Größe Geändert -> Wir faken ein Rename der existierenden auf die neue
+        // So wird die Datenbank aktualisiert ohne dass gelöscht /geadded werden muss..
+        AddToDelList(s);
+        AddToCopyList(d);
+        AddToMoveList(DelListCnt - 1, CopyListCnt - 1);
+        dec(DelListCnt);
+        dec(CopyListCnt);
         inc(s);
         inc(d);
       End;
@@ -402,7 +407,7 @@ Begin
   End
   Else
     result := inttostr(value) + s + 'B'
-End;  
+End;
 
 Function PrettyTime(Time_in_ms: UInt64): String;
 Var

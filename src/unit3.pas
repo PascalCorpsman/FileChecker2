@@ -223,6 +223,8 @@ Begin
     If index <> -1 Then Begin
       DataBase[Index].Filename := RenameList[i].DestFile;
       DataBase[Index].Root := RenameList[i].DestRoot;
+      // Im Falle dass sich anstatt des Dateinamens die Dateigröße geändert hat, muss dies hier übernommen werden !
+      DataBase[Index].Size := RenameList[i].FileSize;
       RefreshDynamicContent(index);
     End;
   End;
