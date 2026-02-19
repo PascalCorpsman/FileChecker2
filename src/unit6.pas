@@ -199,6 +199,7 @@ Begin
   label2.caption := inttostr(length(PendingJobs));
   label4.caption := inttostr(PendingJobsDoable());
   label5.caption := '';
+  ProgressBar1.Position := 0;
   InOut := Nil;
   setlength(InOut, Length(RootFolders));
   For i := 0 To high(InOut) Do Begin
