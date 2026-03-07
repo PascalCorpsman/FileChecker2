@@ -307,6 +307,10 @@ Begin
   End;
   Form4.Init(SelectionToIndexes());
   form4.ShowModal;
+  // Wurde die DB geändert muss sie ggf neu sortiert werden ..
+  If DBChanged Then Begin
+    SortFileList(DataBase);
+  End;
   ComboBox1Change(Nil); // Die Suchergebnisse müssen ggf angepasst werden
   UpdatePendingJobs; // Falls Jobs entstanden sind muss das auch angezeigt werden
   // Wenn aus all den Aktionen Jobs entstanden sind, dann gleich den Job Dialog starten
@@ -673,6 +677,9 @@ End;
 Procedure TForm1.StatusBar1Click(Sender: TObject);
 Begin
   Case CursorToPanelIndex() Of
+    PanelIndexPendingJobInfo: Begin
+        SpeedButton5.Click;
+      End;
     PanelIndexSearchResultInfo: Begin
         ResultsAsFolders := Not ResultsAsFolders;
         ComboBox1Change(Nil);
