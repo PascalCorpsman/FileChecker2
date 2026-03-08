@@ -138,8 +138,18 @@ object Form5: TForm5
     Left = 80
     Height = 26
     Top = 126
-    Width = 360
+    Width = 288
+    ReadOnly = True
     TabOrder = 4
     Text = 'Edit1'
+  end
+  object Button3: TButton
+    Left = 381
+    Height = 25
+    Top = 127
+    Width = 59
+    Caption = 'Edit'
+    TabOrder = 5
+    OnClick = Button3Click
   end
 end

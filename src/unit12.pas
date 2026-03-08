@@ -68,17 +68,27 @@ Procedure TForm12.FormCreate(Sender: TObject);
 Begin
   caption := 'Categories';
   edit1.text := '';
+  Constraints.MinHeight := Height;
+  Constraints.MinWidth := Width;
 End;
 
 Procedure TForm12.Button1Click(Sender: TObject);
 Begin
   ListBox1.Items.Add(edit1.text);
+  Categories.Add(edit1.text);
 End;
 
 Procedure TForm12.Button2Click(Sender: TObject);
+Var
+  s: String;
 Begin
+  showmessage('Todo.');
+  exit;
   If ListBox1.ItemIndex <> -1 Then Begin
+    s := ListBox1.Items[ListBox1.ItemIndex];
+    Categories.Delete(ListBox1.ItemIndex);
     ListBox1.Items.Delete(ListBox1.ItemIndex);
+    // löschen von s aus allen datensätzen
   End;
 End;
 

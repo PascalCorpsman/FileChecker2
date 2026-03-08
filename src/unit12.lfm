@@ -15,6 +15,7 @@ object Form12: TForm12
     Height = 80
     Top = 48
     Width = 240
+    Anchors = [akTop, akLeft, akRight, akBottom]
     ItemHeight = 0
     TabOrder = 0
     TopIndex = -1
@@ -31,6 +32,7 @@ object Form12: TForm12
     Height = 25
     Top = 9
     Width = 40
+    Anchors = [akTop, akRight]
     Caption = 'Add'
     TabOrder = 1
     OnClick = Button1Click
@@ -47,6 +49,7 @@ object Form12: TForm12
     Height = 26
     Top = 8
     Width = 240
+    Anchors = [akTop, akLeft, akRight]
     TabOrder = 2
     Text = 'Edit1'
   end
@@ -55,6 +58,7 @@ object Form12: TForm12
     Height = 80
     Top = 48
     Width = 40
+    Anchors = [akTop, akRight, akBottom]
     Caption = 'Del'
     TabOrder = 3
     OnClick = Button2Click
@@ -64,6 +68,7 @@ object Form12: TForm12
     Height = 72
     Top = 176
     Width = 368
+    Anchors = [akLeft, akRight, akBottom]
     Caption = ' Dataset '
     ClientHeight = 55
     ClientWidth = 366
@@ -102,6 +107,7 @@ object Form12: TForm12
     Height = 25
     Top = 264
     Width = 368
+    Anchors = [akLeft, akRight, akBottom]
     Caption = 'OK'
     ModalResult = 1
     TabOrder = 5
@@ -111,6 +117,7 @@ object Form12: TForm12
     Height = 25
     Top = 136
     Width = 136
+    Anchors = [akLeft, akBottom]
     Caption = 'Add category to --\/'
     TabOrder = 6
     OnClick = Button4Click
@@ -120,6 +127,7 @@ object Form12: TForm12
     Height = 25
     Top = 136
     Width = 136
+    Anchors = [akLeft, akBottom]
     Caption = 'Del category to --\/'
     TabOrder = 7
     OnClick = Button5Click

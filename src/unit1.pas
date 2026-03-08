@@ -434,7 +434,6 @@ Begin
   End;
   form12.Init(Selected[ListBox1.ItemIndex]);
   form12.ShowModal;
-
 End;
 
 Procedure TForm1.ComboBox1Change(Sender: TObject);

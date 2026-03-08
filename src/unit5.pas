@@ -29,6 +29,7 @@ Type
   TForm5 = Class(TForm)
     Button1: TButton;
     Button2: TButton;
+    Button3: TButton;
     DateEdit1: TDateEdit;
     Edit1: TEdit;
     Label1: TLabel;
@@ -44,9 +45,10 @@ Type
     Label8: TLabel;
     Label9: TLabel;
     Memo1: TMemo;
+    Procedure Button3Click(Sender: TObject);
     Procedure FormCreate(Sender: TObject);
   private
-
+    fDataSetIndex: integer;
   public
     Procedure Init(aDataSetIndex: Integer);
     Procedure LCLToDataSet(aDataSetIndex: Integer);
@@ -59,17 +61,26 @@ Implementation
 
 {$R *.lfm}
 
-Uses udirsync;
+Uses udirsync, Unit12;
 
 { TForm5 }
 
 Procedure TForm5.FormCreate(Sender: TObject);
 Begin
   caption := 'File detail';
+  Constraints.MinHeight := Height;
+  Constraints.MinWidth := Width;
+End;
+
+Procedure TForm5.Button3Click(Sender: TObject);
+Begin
+  form12.Init(fDataSetIndex);
+  form12.ShowModal;
 End;
 
 Procedure TForm5.Init(aDataSetIndex: Integer);
 Begin
+  fDataSetIndex := aDataSetIndex;
   label2.caption := DataBase[aDataSetIndex].Filename;
   label4.caption := RootFolderToRootLabel(DataBase[aDataSetIndex].Root);
   label6.caption := FileSizeToString(DataBase[aDataSetIndex].Size);
