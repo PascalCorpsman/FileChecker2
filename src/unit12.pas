@@ -73,15 +73,23 @@ Begin
 End;
 
 Procedure TForm12.Button1Click(Sender: TObject);
+Var
+  i: Integer;
 Begin
-  ListBox1.Items.Add(edit1.text);
   Categories.Add(edit1.text);
+  Categories.Sort;
+  // Neu Sortiert übernehmen
+  ListBox1.Items.Clear;
+  For i := 0 To Categories.Count - 1 Do Begin
+    ListBox1.Items.Add(Categories[i]);
+  End;
 End;
 
 Procedure TForm12.Button2Click(Sender: TObject);
 Var
   s: String;
 Begin
+  // Del Category
   showmessage('Todo.');
   exit;
   If ListBox1.ItemIndex <> -1 Then Begin
@@ -94,6 +102,7 @@ End;
 
 Procedure TForm12.Button4Click(Sender: TObject);
 Begin
+  // Add Category to dataset
   If ListBox1.ItemIndex <> -1 Then Begin
     setlength(DataBase[findex].Categories, high(DataBase[findex].Categories) + 2);
     DataBase[findex].Categories[high(DataBase[findex].Categories)] := ListBox1.Items[ListBox1.ItemIndex];
@@ -107,6 +116,7 @@ Var
   s: String;
   i, j: Integer;
 Begin
+  // Del Category from
   If ListBox1.ItemIndex <> -1 Then Begin
     s := ListBox1.Items[ListBox1.ItemIndex];
     For i := 0 To high(DataBase[findex].Categories) Do Begin
@@ -131,6 +141,7 @@ Begin
   For i := 0 To ListBox1.Items.Count - 1 Do Begin
     Categories.Add(ListBox1.Items[i]);
   End;
+  Categories.Sort;
 End;
 
 Procedure TForm12.Init(index: integer);

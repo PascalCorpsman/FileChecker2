@@ -521,6 +521,7 @@ Begin
   For i := 0 To IniFile.ReadInteger('Categories', 'Count', 0) - 1 Do Begin
     Categories.Add(IniFile.ReadString('Categories', 'Cat' + inttostr(i), ''));
   End;
+  Categories.Sort;
 End;
 
 Procedure StorePendingJobs;

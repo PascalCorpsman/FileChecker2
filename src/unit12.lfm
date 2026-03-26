@@ -128,7 +128,7 @@ object Form12: TForm12
     Top = 136
     Width = 136
     Anchors = [akLeft, akBottom]
-    Caption = 'Del category to --\/'
+    Caption = 'Del category from --\/'
     TabOrder = 7
     OnClick = Button5Click
   end

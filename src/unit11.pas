@@ -72,24 +72,28 @@ Begin
   result := TGroupBox.Create(ScrollBox1);
   result.name := 'gb' + aLabel;
   result.Parent := ScrollBox1;
-  result.Left := 8;
+  result.Left := Scale96ToForm(8);
   result.Top := aTop;
-  result.Width := ScrollBox1.Width - 16;
-  result.Height := 80;
+  result.Width := ScrollBox1.Width - Scale96ToForm(16);
+{$IFDEF Windows}
+  result.Height := Scale96ToForm(96);
+{$ELSE}
+  result.Height := Scale96ToForm(80);
+{$ENDIF}
   result.Caption := '';
   result.Anchors := [akTop, akLeft, akRight];
   L := TLabel.Create(result);
   l.name := result.name + 'L1';
   l.Parent := result;
-  l.top := 8;
-  l.left := 8;
+  l.top := Scale96ToForm(8);
+  l.left := Scale96ToForm(8);
   l.Caption := aLabel;
   p := TProgressBar.Create(result);
   p.name := result.name + 'P1';
   p.Parent := result;
-  p.left := 8;
-  p.Top := 32;
-  p.Width := Result.Width - 16;
+  p.left := Scale96ToForm(8);
+  p.Top := Scale96ToForm(32);
+  p.Width := Result.Width - Scale96ToForm(16);
   p.Anchors := [akTop, akLeft, akRight];
   p.Min := 0;
   p.Max := 100;
@@ -101,8 +105,8 @@ Begin
   l := TLabel.Create(Result);
   l.Name := result.Name + 'L2';
   l.Parent := Result;
-  l.top := 56;
-  l.left := 8;
+  l.top := Scale96ToForm(56);
+  l.left := Scale96ToForm(8);
   If (aSize <> 0) And (aFree <> -1) Then Begin
     l.caption := 'Used: ' + FileSizeToString(aSize - aFree);
   End
@@ -112,10 +116,10 @@ Begin
   l := TLabel.Create(Result);
   l.Name := result.Name + 'L3';
   l.Parent := Result;
-  l.top := 8;
-  l.left := result.Width - 100 - 8;
+  l.top := Scale96ToForm(8);
+  l.left := result.Width - Scale96ToForm(150 + 8);
   l.AutoSize := false;
-  l.Width := 100;
+  l.Width := Scale96ToForm(150);
   l.Alignment := taRightJustify;
   l.Anchors := [akRight, akTop];
   If (aSize <> 0) Then Begin
@@ -127,10 +131,10 @@ Begin
   l := TLabel.Create(Result);
   l.Name := result.Name + 'L4';
   l.Parent := Result;
-  l.top := 56;
-  l.left := result.Width - 100 - 8;
+  l.top := Scale96ToForm(56);
+  l.left := result.Width - Scale96ToForm(150 + 8);
   l.AutoSize := false;
-  l.Width := 100;
+  l.Width := Scale96ToForm(150);
   l.Alignment := taRightJustify;
   l.Anchors := [akRight, akTop];
   If (aFree <> -1) Then Begin
