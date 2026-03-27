@@ -286,7 +286,7 @@ Begin
   Dellist := Nil;
   udirsync.SortFileList(MergedBuffers);
   udirsync.SortFileList(DataBaseFiles);
-  GenerateJobLists('', '', MergedBuffers, DataBaseFiles, RenameList, CopyList, Dellist, false);
+  GenerateJobLists('', '', MergedBuffers, DataBaseFiles, RenameList, CopyList, Dellist, false, true);
   // Die Roots müssen nun wieder "raus"
   CleanFromRoots(CopyList);
   CleanFromRoots(Dellist);
