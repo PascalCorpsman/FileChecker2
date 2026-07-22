@@ -723,10 +723,10 @@ Begin
       break;
     End;
   End;
-  ImageList1.Draw(StatusBar1.Canvas, rect.Left + 8, rect.Top, index);
+  ImageList1.Draw(StatusBar1.Canvas, rect.Left + Scale96ToForm(8), rect.Top, index);
   s := StatusBar1.Panels[i].Text;
   StatusBar1.Canvas.Brush.Style := bsClear;
-  StatusBar1.Canvas.TextOut(rect.Left + 8 + 16 + 8, (rect.Top + rect.Bottom - StatusBar1.Canvas.TextHeight(s)) Div 2, s);
+  StatusBar1.Canvas.TextOut(rect.Left + Scale96ToForm(8 + 16 + 8), (rect.Top + rect.Bottom - StatusBar1.Canvas.TextHeight(s)) Div 2, s);
 End;
 
 Procedure TForm1.StatusBar1Hint(Sender: TObject);
@@ -796,7 +796,11 @@ Begin
   xmin := 0;
   xmax := 0;
   For i := 0 To StatusBar1.Panels.Count - 1 Do Begin
-    xmax := xmax + StatusBar1.Panels[i].Width;
+    xmax := xmax + StatusBar1.Panels[i].Width
+{$IFDEF LINUX}
+    + Scale96ToForm(8) // WTF: why ?
+{$ENDIF}
+    ;
     If (p.x >= xmin) And (p.x <= xmax) Then Begin
       result := i;
       break;

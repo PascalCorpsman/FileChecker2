@@ -26,9 +26,9 @@ object Form1: TForm1
   end
   object StatusBar1: TStatusBar
     Left = 0
-    Height = 24
+    Height = 18
     Hint = 'Blabb'
-    Top = 576
+    Top = 582
     Width = 800
     AutoHint = True
     Panels = <    
@@ -118,7 +118,7 @@ object Form1: TForm1
   end
   object ComboBox1: TComboBox
     Left = 8
-    Height = 28
+    Height = 30
     Hint = 'Search with the following patterns:'#10'*'#10'<filename>'#10'<root>:*'#10'<root>:<filename>'#10'comment:*'#10'comment:<text>'#10#10'Press "Return" to permanently store your search in the history.'
     Top = 12
     Width = 624
