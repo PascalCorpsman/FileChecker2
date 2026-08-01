@@ -99,7 +99,15 @@ Begin
   p.Options := [poWaitOnExit];
   p.CurrentDirectory := ExtractFileDir(aCommand);
   p.Executable := ExtractFileName(aCommand);
-  p.Execute;
+  Try
+    p.Execute;
+  Except
+    showmessage('Error, unabe to run copycommander2' + LineEnding +
+      'Folder: ' + ExtractFileDir(aCommand) + LineEnding +
+      'CMD:' + ExtractFileName(aCommand)
+      );
+    exit;
+  End;
   p.free;
   result := true;
 End;
