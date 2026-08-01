@@ -168,7 +168,10 @@ Const
 Procedure TForm1.FormCreate(Sender: TObject);
 Var
   i: Integer;
+  aDir: String;
 Begin
+  aDir := ExtractFileDir(ParamStr(0));
+  SetCurrentDir(aDir);
   Caption := 'Filechecker 2 ver. 0.01, by Corpsman, www.Corpsman.de';
   ResultsAsFolders := false;
   Categories := TStringList.Create;

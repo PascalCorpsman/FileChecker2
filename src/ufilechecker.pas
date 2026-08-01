@@ -804,9 +804,12 @@ Begin
 End;
 
 Function ExecuteJob(Const aJob: TJob): Boolean;
+Const
+  maxTimeoutms = 10000;
 Var
   fp: String;
   index, RootIndex: Integer;
+  atime: QWord;
 Begin
   result := false;
   If Not FileExists(aJob.RealSourceFile) Then exit;
@@ -837,10 +840,15 @@ Begin
       showmessage('Error, unable to start copycommander2');
       exit;
     End;
-    delay(2000); // TODO: gibt es hier einen besseren Weg als zu warten ?
+    // Try maxTimeoutms long to access to copycommander before throwing a error message
+    atime := GetTickCount64;
+    While atime + maxTimeoutms > GetTickCount64 Do Begin
+      If isCopyCommanderRestAPIRunning(CopyCommanderIP, CopyCommanderPort) Then Begin
+        atime := GetTickCount64 - maxTimeoutms;
+      End;
+    End;
     // 1.75 Check if Copy Commander is Running -> Not Error
     If Not isCopyCommanderRestAPIRunning(CopyCommanderIP, CopyCommanderPort) Then Begin
-      // Todo: Fehlermeldung ?
       showmessage('Error, copycommander2 does not respond on API');
       exit;
     End;
