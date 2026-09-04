@@ -210,6 +210,7 @@ Begin
   DatabaseFileName := '';
   For i := 0 To high(Clients[UserIndex.x].Users) Do Begin
     If (Clients[UserIndex.x].Users[i].Username) = dbName Then Begin
+      UserIndex.y := i; // Nur so kann user x die Datenbank eines anderen Users laden, ist das ein Feature oder ein Bug, wer weiß das schon, ..
       DatabaseFileName := GetClientUserDBFileName(UserIndex);
       break;
     End;

@@ -129,10 +129,6 @@
         <UnitName Value="Unit8"/>
       </Unit>
       <Unit>
-        <Filename Value="usslconnector.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit>
-      <Unit>
         <Filename Value="unit9.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="Form9"/>
@@ -156,13 +152,17 @@
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Unit12"/>
       </Unit>
+      <Unit>
+        <Filename Value="../../TCP_IP/SSL_Client_Server/usslconnector.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="../../Graphik;../../DatenSteuerung;../Sample/OpenGL;../Sample/DatenSteuerung;../Sample/Graphik;../../TCP_IP"/>
+      <OtherUnitFiles Value="../../Graphik;../../DatenSteuerung;../Sample/OpenGL;../Sample/DatenSteuerung;../Sample/Graphik;../../TCP_IP;../../TCP_IP/SSL_Client_Server"/>
     </SearchPaths>
     <Parsing>
       <SyntaxOptions>
